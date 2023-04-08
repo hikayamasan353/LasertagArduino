@@ -51,6 +51,8 @@
 //Pins
 int GUN_TriggerPin; //Trigger pin.
 bool GUN_TriggerPressed; //Is gun trigger pressed?
+
+
 int GUN_ReloadPin; //Reload pin.
 int GUN_SelectorPin; //Selector pin
 //For burst/full auto fire.
@@ -60,8 +62,26 @@ int GUN_MagazinePin; //Magazine pin
 int GUN_Speaker; //Speaker output pin
 int GUN_Vibro; //Vibro blowback pin
 
+//Output pins for IR and LED signal.
 int GUN_IR; //IR LED
 int GUN_LED; //LED
+///////////////////////////////////
+// GUN_LED as a shot indicator is set to steady on.
+// GUN_IR is pulsed according to MilesTag 2 or other protocol.
+
+
+// Compatibility
+// LASERWAR emitter has 3 pins. A common positive power, the LED negative and IR negative.
+// The output Arduino pins are connected to the bases of the pull-down transistors that
+// control the IR and LEDs.
+// Connect the each negative to the collector of each transistor, and ground the emitters.
+////////////////////////////////////////////////////////
+// LSD and Poligon64 emitters have separate positives and are to be controlled
+// by directly connecting to the Arduino output pins.
+
+
+
+
 //////////////////////////////////////////
 // IRremote.h uses pin 3 for IR output. //
 //////////////////////////////////////////
@@ -128,23 +148,20 @@ int SYS_CompatibilityMode; //0 - no compatibility, 1 - LASERWAR, 2 - LSD, 3 - Po
 int SYS_Protocol = 1; //1 for MilesTag 2
 
 //Pins for Russian laser tag manufacturers compatibility
-//int LW_EmitterIN; //LASERWAR IR emitter input
-//int LW_LEDIN; //LASERWAR LED input
+/////////////////////////
+//       LASERWAR      //
+/////////////////////////
 // LASERWAR has three pin emitters. It has common positive and two output pins for LED and IR.
-// Connect common positive to +5V, IR to LW_EmitterIN and LED to LW_LEDIN.
-// Pull down resistor
-// Set pin mode to INPUT_PULLUP
-// Then set both pins to LOW 
-// digitalWrite(LW_EmitterIN, LOW);
-// digitalWrite(LW_LEDIN, LOW);
-
-int LW_EmitterOUT;
-int LW_LEDOUT;
-
 // LW emitters are controlled by the two pull-down NPN transistors.
-// Connect common positive to +5V, IR and LED to the collector of each transistors, and ground the emitters.
-// Connect these pins to the base of each transistor.
-// NPN transistor works like a switch. 
+// Connect common positive to +5V, IR and LED negative pins to the collector of each transistors, and ground the emitters.
+// Connect GUN_IR and GUN_LED pins to the base of each transistor.
+// NPN transistor works like a switch.
+// Current goes from collector to emitter. If the base is powered, it switches on.
+///////////////////////////////////
+int LW_EmitterOUT; // Connect this pin to the base of a control pull down transistor
+int LW_LEDOUT;     // Connect this pin to the base of a control pull down transistor
+
+
 
 
 int LW_Bluetooth_MODE;
@@ -164,6 +181,9 @@ int LW_TSOP_1;
 int LW_TSOP_2;
 int LW_TSOP_3;
 ////////////////////////////////////////
+// LSD and Poligon have direct connection to the output.
+///////////////////////////////////////////
+
 
 int P64_IROUT; //Poligon64 IR positive
 int P64_LEDOUT; //Poligon64 LED positive
@@ -175,6 +195,17 @@ int LSD_LEDOUT; //LSD LED positive
 
 void setup() {
   // put your setup code here, to run once:
+
+
+
+  ///////////////////////////////////////////
+  // Set up the pin numbers of each pin
+  //////////////////////////
+  // IR pin is pin 3 since it sends PWM signal
+  GUN_IR=3;
+  // LED pin has to send the steady signal for the fire flash
+  // Non-PWM pin would be used for this purpose.
+  GUN_LED=4;
 
   //Gun trigger setup
   pinMode(GUN_TriggerPin, INPUT);
@@ -192,6 +223,10 @@ void setup() {
 
 
 
+  //Control the 
+  pinMode(GUN_IR, OUTPUT);
+  pinMode(GUN_LED, OUTPUT);
+
 
   ////////////////////////
   // COMPATIBILITY CODE //
@@ -200,10 +235,8 @@ void setup() {
   ////////////////////////
   // LW has 3 pin 
   // +5V, LED out and IR out
-  pinMode(LW_EmitterIN, INPUT_PULLUP);
-  pinMode(LW_LEDIN, INPUT_PULLUP);
-  digitalWrite(LW_EmitterIN, LOW);
-  digitalWrite(LW_LEDIN, LOW);
+  pinMode(LW_EmitterOUT, OUTPUT);
+  pinMode(LW_LEDOUT, OUTPUT);
 
   
   // Poligon64 //
@@ -217,19 +250,22 @@ void setup() {
   {
     case 1: //LASERWAR
     {
-      //Since LW IR and LED pins are input pullup, we will write them to turn on and off
-      GUN_IR=LW_EmitterIN;
-      GUN_LED=LW_LEDIN; 
+      //Since LW IR and LED pins are output, they are connected to the bases of each transistor.
+      //WARNING: DO NOT CONNECT LASERWAR EMITTERS DIRECTLY TO THE OUTPUT PINS!!!
+      LW_EmitterOUT=GUN_IR;
+      LW_LEDOUT=GUN_LED; 
       
       
     }
     case 2: //LSD
     {
-      
+        LSD_IROUT=GUN_IR;
+        LSD_LEDOUT=GUN_LED;
     }
     case 3: //Poligon64
     {
-      
+            P64_IROUT=GUN_IR;
+            P64_LEDOUT=GUN_LED;
     }
     default:
     {

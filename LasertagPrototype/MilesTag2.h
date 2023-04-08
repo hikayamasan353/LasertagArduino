@@ -143,6 +143,18 @@ IRrecv sensor;
 int SYS_CarrierFreq=38;
 
 
+//600 us pause
+const int SYS_Pause=600;
+//MilesTag 2 carrier frequency
+const int SYS_PWMFREQ=1667;
+// Half duty cycle for the zero
+const int SYS_ZeroCycle=128;
+// Full duty cycle for the one
+const int SYS_OneCycle=255;
+
+
+
+
 // Send a header
 void MT2_Header(int pin)
 {
