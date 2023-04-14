@@ -8,7 +8,7 @@
 /////////////////////////////////
 
 //#include "IRremote.h"
-//#include "Wait.h"
+#include "Wait.h"
 
 ////////////////////////////////////////////////////
 // PREFIXES
@@ -314,7 +314,7 @@ void GUN_Trigger()
         while(GUN_TriggerPressed)
         {
           GUN_Fire();
-          delay((1/(GUN_FireRate/60))/1000);
+          Wait((1/(GUN_FireRate/60))/1000);
         }
 
 
@@ -326,7 +326,7 @@ void GUN_Trigger()
         for(int i=0;i<GUN_BurstCount;i++)
         {
           GUN_Fire();
-          delay((1/(GUN_FireRate/60))/1000);
+          Wait((1/(GUN_FireRate/60))/1000);
         }
 
       }
@@ -335,7 +335,7 @@ void GUN_Trigger()
       {
         //Fire just once.
         GUN_Fire();
-        delay((1/(GUN_FireRate/60))/1000);
+        Wait((1/(GUN_FireRate/60))/1000);
 
       }
     }
@@ -400,7 +400,7 @@ void GUN_Reload()
   
 
 
-  delay(5*1000); //Wait 5 seconds
+  Wait(5*1000); //Wait 5 seconds
   //Todo: Reassign the time for reloading
   
 }
