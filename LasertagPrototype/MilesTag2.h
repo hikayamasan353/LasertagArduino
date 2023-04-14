@@ -6,6 +6,7 @@
 ///////////////////////////
 #include "Arduino.h"
 #include "IRremote.h"
+#include "Wait.h"
 
 
 /////////
@@ -14,6 +15,18 @@
 // MT2 - MilesTag 2 protocol
 // SYS_MT2 - System MilesTag 2 protocol
 ////////
+
+
+
+/////////////////////////////////////
+//        CARRIER FREQUENCIES      //
+/////////////////////////////////////
+// Used to pulse the IR LED during //
+// its firing time.                //
+/////////////////////////////////////
+const int SYS_38kHz=38000;
+const int SYS_56kHz=56000;
+int SYS_CarrierFrequency=SYS_38kHz;
 
 ////////////////////////////////////////
 //   IMPORTANT IMPORTANT IMPORTANT    //
@@ -160,10 +173,10 @@ void MT2_Header(int pin)
 {
   //2400 us high
   digitalWrite(pin, HIGH);
-  delayMicroseconds(2400);
+  WaitMicroseconds(2400);
   //600 us low
   digitalWrite(pin, LOW);
-  delayMicroseconds(600);  
+  WaitMicroseconds(600);  
 }
 
 // Binary Zero
@@ -171,20 +184,20 @@ void MT2_BIN_Zero(int pin)
 {
   //600 us high
   digitalWrite(pin, HIGH);
-  delayMicroseconds(600);
+  WaitMicroseconds(600);
   //600 us low
   digitalWrite(pin, LOW);
-  delayMicroseconds(600);
+  WaitMicroseconds(600);
 }
 //Binary One
 void MT2_BIN_One(int pin)
 {
   //1200 us high
   digitalWrite(pin, HIGH);
-  delayMicroseconds(1200);
+  WaitMicroseconds(1200);
   //600 us low
   digitalWrite(pin, LOW);
-  delayMicroseconds(600);
+  WaitMicroseconds(600);
 }
 
 //Sends hex values as binary pulses

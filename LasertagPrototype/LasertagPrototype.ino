@@ -7,8 +7,8 @@
 // Rev. 0.01 Kurchatko         //
 /////////////////////////////////
 
-#include "IRremote.h"
-
+//#include "IRremote.h"
+//#include "Wait.h"
 
 ////////////////////////////////////////////////////
 // PREFIXES
@@ -223,10 +223,10 @@ void setup() {
 
   //Sensors
   pinMode(GUN_Sensor, INPUT);
-  IRrecv GUN_IRrecv_Sensor(GUN_Sensor); //IRremote System code 
+  //IRrecv GUN_IRrecv_Sensor(GUN_Sensor); //IRremote System code 
   
   pinMode(EXT_Sensor1, INPUT);
-  IRrecv GUN_IRrecv_Sensor1(EXT_Sensor1); //IRremote System code
+  //IRrecv GUN_IRrecv_Sensor1(EXT_Sensor1); //IRremote System code
 
 
 
@@ -383,16 +383,15 @@ void GUN_Reload()
 {
   Serial.println("Reloading...");
   //Restack old mags
-  GUN_Magazine pmags1[GUN_MagazineCount]; //New mag stack
-  for(int i=1;i<GUN_MagazineCount;i++) //Index 0 stands for the loaded magazine.
-  {
-    pmags1[i-1]=GUN_Magazines[i]; //Stack up the remaining magazines
-  }
-  pmags1[GUN_MagazineCount-1]=GUN_Magazines[0]; //Move the unloaded magazine to the end of the stack
-
-  for(int i=0;i<GUN_MagazineCount;i++)
-  {
-    GUN_Magazines[i]=pmags1[i];
+  // Sort magazines by ammo count in ascending order
+  for (int i = 0; i < GUN_MagazineCount - 1; i++) {
+    for (int j = i + 1; j < GUN_MagazineCount; j++) {
+      if (GUN_Magazines[i].ammo > GUN_Magazines[j].ammo) {
+        GUN_Magazine temp = GUN_Magazines[i];
+        GUN_Magazines[i] = GUN_Magazines[j];
+        GUN_Magazines[j] = temp;
+      }
+    }
   }
 
   //Play reloading sound
