@@ -198,6 +198,14 @@ void setup() {
 
 
 
+
+  ////////////////////////////////////////////////////////
+  // COMMENCING LASER TAG SYSTEM CONSOLE INITIALIZATION //
+  ////////////////////////////////////////////////////////
+  Serial.begin(9600);
+  // CONSOLE: ONLINE
+  Serial.println("KOZAC LASER TAG SYSTEM V.0.01 KURCHATKO"); //Title
+
   ///////////////////////////////////////////
   // Set up the pin numbers of each pin
   //////////////////////////
@@ -279,6 +287,7 @@ void setup() {
   {
     GUN_Magazines[i]=GUN_Magazine(GUN_MagazineCapacity);
   }
+  Serial.println("Magazine initialization complete"); //Log
 
   
 }
@@ -372,6 +381,7 @@ void GUN_Fire()
 //Gun reload
 void GUN_Reload()
 {
+  Serial.println("Reloading...");
   //Restack old mags
   GUN_Magazine pmags1[GUN_MagazineCount]; //New mag stack
   for(int i=1;i<GUN_MagazineCount;i++) //Index 0 stands for the loaded magazine.
@@ -431,12 +441,16 @@ void SYS_Hit()
 void SYS_Dead()
 {
 
+  Serial.println("KILLED IN ACTION");
   //Fire the LED and the vibro for ten seconds.
   digitalWrite(EXT_Vibro, HIGH);
   delay(10000);
   digitalWrite(EXT_Vibro, LOW);
+  
 
   //Disable the player until respawn
+
+  //TODO: Statistics with PlayerID
   
 }
 
@@ -455,6 +469,14 @@ void loop() {
   EXT_SensorCheck();
   //Operate the trigger
   GUN_Trigger();
+
+  //Log the ammo screen
+  Serial.println("Ammo: "+GUN_Magazines[0].ammo);
+  for(int i=0;i<GUN_MagazineCount;i++)
+  {
+    Serial.print(GUN_Magazines[i].ammo+" ");
+  }
+  Serial.println();
 
   //TODO: Regenerate health after the specified time if not hit for certain time
   //TODO: Armour together with HP
