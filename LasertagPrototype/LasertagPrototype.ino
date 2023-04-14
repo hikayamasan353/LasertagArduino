@@ -410,16 +410,66 @@ void EXT_SensorCheck()
 {
 
   //Check sensor state by reading the signals
-  int SensorState=digitalRead(GUN_Sensor)||digitalRead(EXT_Sensor1)||digitalRead(EXT_Sensor2)||digitalRead(EXT_Sensor3)||digitalRead(EXT_Sensor4);
-  if(SensorState=HIGH) //If the sensor has been lit
-    SYS_Hit(); //Ouch!!!
-  //TODO: Decode the MilesTag 2 signal
+  //int SensorState=digitalRead(GUN_Sensor)||digitalRead(EXT_Sensor1)||digitalRead(EXT_Sensor2)||digitalRead(EXT_Sensor3)||digitalRead(EXT_Sensor4);
+  //TODO: Compare the multiple sensors.
 
+
+  //If MilesTag 2 header came in
   //[Header]-[0ppppppp]-[ttdddd]
   //Header: 2400 us HIGH, 600 us LOW
   //Zero: 600 us HIGH, 600 us LOW
   //One: 1200 us HIGH, 600 us LOW
+  if(MT2_HeaderIn(GUN_Sensor))
+  {
 
+    //Check the sign bits
+    //0x80 means 7bit value with 0 leftmost bit
+    //This means PlayerID is used
+    if(MT2_ValueIn(GUN_Sensor,8)<0x80)
+    {
+      //TODO: Store PlayerID for statistics
+      if(MT2_ValueIn(GUN_Sensor,2))
+      {
+        //TODO: Store TeamID for statistics
+        //TODO: Prevent friendly fire
+        if(MT2_ValueIn(GUN_Sensor,4))
+        {
+          //Deal damage
+          SYS_Hit(); //Ouch!!!
+        }
+      }
+    }
+    else
+    {
+      //Process messages
+      //Add health
+      if(MT2_ValueIn(GUN_Sensor,8)==SYS_MT2_AddHealth)
+      {
+        //Add hit points
+      }
+      else if(MT2_ValueIn(GUN_Sensor,8)==SYS_MT2_AddRounds)
+      {
+        //Add ammo
+      }
+      //Check messages
+      else if(MT2_ValueIn(GUN_Sensor,8)==SYS_MT2_Command)
+      {
+        //Admin Kill
+        if(MT2_ValueIn(GUN_Sensor,8)==SYS_MT2_AdminKill)
+        {
+          //Kill the player
+          SYS_Dead();
+        }
+
+        
+      }
+
+      
+    }
+
+
+    
+  }
 }
 
 //Receive hit

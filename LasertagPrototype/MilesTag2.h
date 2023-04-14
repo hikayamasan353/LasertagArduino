@@ -214,6 +214,68 @@ void MT2_Signal(int pin, int bitlength, int value)
 }
 
 
+
+
+//Check the incoming header
+bool MT2_HeaderIn(int pin)
+{
+    unsigned int pulseDuration=pulseIn(pin, HIGH);
+    unsigned int pulsePause=pulseIn(pin, LOW);
+    //2400 us in, 600 us off
+    if((pulseDuration==2400)&&(pulsePause==600))
+    {
+        return true;
+    }
+    else return false;
+}
+
+byte MT2_BitIn(int pin)
+{
+  unsigned int pulseDuration=pulseIn(pin, HIGH);
+  unsigned int pulsePause=pulseIn(pin, LOW);
+  if((pulseDuration==1200)&&(pulsePause==600))
+  {
+    return 0b1;
+  }
+  if((pulseDuration==600)&&(pulsePause==600))
+  {
+    return 0b0;
+  }
+  if(pulsePause>600)
+  {
+    //Out!
+    return 0;
+  }
+}
+
+//Returns the binary value of binary pulses
+int MT2_ValueIn(int pin, int bitlength)
+{
+  byte byteValue = 0;
+  for (int i = 0; i < bitlength; i++)
+  {
+    byteValue = byteValue << 1; // Shift left by 1 position
+    byteValue |= MT2_BitIn(pin); // Add the new bit
+  }
+  return byteValue;
+}
+
+//Returns the signal accepted by the pin
+int MT2_SignalIn(int pin, int bitlength)
+{
+
+  int value;
+  //Is the header incoming?
+  if(MT2_HeaderIn(pin))
+  {
+
+    
+    
+  }
+  
+  
+}
+
 /*
 //Player ID
 //[0ppppppp]
