@@ -231,8 +231,10 @@ void setup() {
 
 
 
-  //Control the 
+  //Control the LED and IR LED
   pinMode(GUN_IR, OUTPUT);
+  SYS_PWMSet(GUN_IR, 38000);//Set the carrier frequency to 38 kHz
+  
   pinMode(GUN_LED, OUTPUT);
 
 

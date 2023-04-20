@@ -158,13 +158,33 @@ int SYS_CarrierFreq=38;
 
 //600 us pause
 const int SYS_Pause=600;
-//MilesTag 2 carrier frequency
-const int SYS_PWMFREQ=1667;
-// Half duty cycle for the zero
-const int SYS_ZeroCycle=128;
-// Full duty cycle for the one
-const int SYS_OneCycle=255;
 
+
+//Sets PWM to the designated pin
+void SYS_PWMSet(int pin, int frq)
+{
+    switch (pin)
+    {
+        case 3:
+            TCCR2B = TCCR2B & 0b11111000 | 0x01; // set prescaler to 1
+            OCR2A = (int)(F_CPU / frq); // calculate top value
+            break;
+        case 5:
+        case 6:
+            TCCR0B = TCCR0B & 0b11111000 | 0x01; // set prescaler to 1
+            OCR0A = (int)(F_CPU / frq); // calculate top value
+            break;
+        case 9:
+        case 10:
+        case 11:
+            TCCR1B = TCCR1B & 0b11111000 | 0x01; // set prescaler to 1
+            ICR1 = (int)(F_CPU / frq); // calculate top value
+            break;
+        default:
+            // NOT A PWM PIN
+            break;
+    }
+}
 
 
 
@@ -172,7 +192,7 @@ const int SYS_OneCycle=255;
 void MT2_Header(int pin)
 {
   //2400 us high
-  digitalWrite(pin, HIGH);
+  analogWrite(pin,128); //Send PWM pulse frequency
   WaitMicroseconds(2400);
   //600 us low
   digitalWrite(pin, LOW);
@@ -183,7 +203,7 @@ void MT2_Header(int pin)
 void MT2_BIN_Zero(int pin)
 {
   //600 us high
-  digitalWrite(pin, HIGH);
+  analogWrite(pin,128); //Send PWM pulse frequency
   WaitMicroseconds(600);
   //600 us low
   digitalWrite(pin, LOW);
@@ -193,7 +213,7 @@ void MT2_BIN_Zero(int pin)
 void MT2_BIN_One(int pin)
 {
   //1200 us high
-  digitalWrite(pin, HIGH);
+  analogWrite(pin,128); //Send PWM pulse frequency
   WaitMicroseconds(1200);
   //600 us low
   digitalWrite(pin, LOW);
@@ -293,7 +313,7 @@ void MT2_PlayerID(int pin, int value)
     //Fire each bit
     for(int i=0;i<bitlength;i++)
     {
-      if(value&(1<<i))
+      if(value&(1<<i))s
         MT2_BIN_One(pin);
       else
         MT2_BIN_Zero(pin);

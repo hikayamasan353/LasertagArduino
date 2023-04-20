@@ -5,6 +5,8 @@
 // Ver. 0.1a             //
 ///////////////////////////
 #include "Arduino.h"
+#include "IRremote.h"
+#include "Wait.h"
 
 
 /////////
@@ -13,6 +15,18 @@
 // MT2 - MilesTag 2 protocol
 // SYS_MT2 - System MilesTag 2 protocol
 ////////
+
+
+
+/////////////////////////////////////
+//        CARRIER FREQUENCIES      //
+/////////////////////////////////////
+// Used to pulse the IR LED during //
+// its firing time.                //
+/////////////////////////////////////
+const int SYS_38kHz=38000;
+const int SYS_56kHz=56000;
+int SYS_CarrierFrequency=SYS_38kHz;
 
 ////////////////////////////////////////
 //   IMPORTANT IMPORTANT IMPORTANT    //
@@ -79,6 +93,10 @@ const int SYS_MT2_SystemData=0x87;
 ////////////////////////////////////
 // Cloning Data
 const int SYS_MT2_CloningData=0x01;
+// Cloning data packet:
+// 0x87 0x01 0xE8 0xXX
+////////////////////////////////////
+
 
 
 
@@ -89,6 +107,21 @@ const int SYS_MT2_REARM2=0x8a;
 // 0 to 15
 const int SYS_MT2_HEAL2=0x8b;
 
+//TeamIDs
+// 0 - BLUE, BLUFOR
+// 1 - RED, OPFOR
+// 2 - YELLOW, INDFOR1
+// 3 - GREEN, INDFOR2
+const int SYS_MT2_BLUE=0;
+const int SYS_MT2_BLUFOR=0;
+////////////////////////////
+const int SYS_MT2_RED=1;
+const int SYS_MT2_OPFOR=1;
+////////////////////////////
+const int SYS_MT2_YELLOW=2;
+const int SYS_MT2_INDFOR1=2;
+const int SYS_MT2_GREEN=3;
+const int SYS_MT2_INDFOR2=3;
 
 
 
@@ -112,40 +145,79 @@ const int SYS_MT2_LW_Defuse=0x12;
 
 
 
+
 ////////////
 // Physical data
+////////////
+// IRremote
+IRsend emitter;
+IRrecv sensor;
+// Carrier frequency, kHz
+int SYS_CarrierFreq=38;
+
+
+//600 us pause
+const int SYS_Pause=600;
+
+
+//Sets PWM to the designated pin
+void SYS_PWMSet(int pin, int frq)
+{
+    switch (pin)
+    {
+        case 3:
+            TCCR2B = TCCR2B & 0b11111000 | 0x01; // set prescaler to 1
+            OCR2A = (int)(F_CPU / frq); // calculate top value
+            break;
+        case 5:
+        case 6:
+            TCCR0B = TCCR0B & 0b11111000 | 0x01; // set prescaler to 1
+            OCR0A = (int)(F_CPU / frq); // calculate top value
+            break;
+        case 9:
+        case 10:
+        case 11:
+            TCCR1B = TCCR1B & 0b11111000 | 0x01; // set prescaler to 1
+            ICR1 = (int)(F_CPU / frq); // calculate top value
+            break;
+        default:
+            // NOT A PWM PIN
+            break;
+    }
+}
+
 
 
 // Send a header
 void MT2_Header(int pin)
 {
   //2400 us high
-  digitalWrite(pin, HIGH);
-  delayMicroseconds(2400);
+  analogWrite(pin,128); //Send PWM pulse frequency
+  WaitMicroseconds(2400);
   //600 us low
   digitalWrite(pin, LOW);
-  delayMicroseconds(600);  
+  WaitMicroseconds(600);  
 }
 
 // Binary Zero
 void MT2_BIN_Zero(int pin)
 {
   //600 us high
-  digitalWrite(pin, HIGH);
-  delayMicroseconds(600);
+  analogWrite(pin,128); //Send PWM pulse frequency
+  WaitMicroseconds(600);
   //600 us low
   digitalWrite(pin, LOW);
-  delayMicroseconds(600);
+  WaitMicroseconds(600);
 }
 //Binary One
 void MT2_BIN_One(int pin)
 {
   //1200 us high
-  digitalWrite(pin, HIGH);
-  delayMicroseconds(1200);
+  analogWrite(pin,128); //Send PWM pulse frequency
+  WaitMicroseconds(1200);
   //600 us low
   digitalWrite(pin, LOW);
-  delayMicroseconds(600);
+  WaitMicroseconds(600);
 }
 
 //Sends hex values as binary pulses
@@ -161,6 +233,68 @@ void MT2_Signal(int pin, int bitlength, int value)
     } 
 }
 
+
+
+
+//Check the incoming header
+bool MT2_HeaderIn(int pin)
+{
+    unsigned int pulseDuration=pulseIn(pin, HIGH);
+    unsigned int pulsePause=pulseIn(pin, LOW);
+    //2400 us in, 600 us off
+    if((pulseDuration==2400)&&(pulsePause==600))
+    {
+        return true;
+    }
+    else return false;
+}
+
+byte MT2_BitIn(int pin)
+{
+  unsigned int pulseDuration=pulseIn(pin, HIGH);
+  unsigned int pulsePause=pulseIn(pin, LOW);
+  if((pulseDuration==1200)&&(pulsePause==600))
+  {
+    return 0b1;
+  }
+  if((pulseDuration==600)&&(pulsePause==600))
+  {
+    return 0b0;
+  }
+  if(pulsePause>600)
+  {
+    //Out!
+    return 0;
+  }
+}
+
+//Returns the binary value of binary pulses
+int MT2_ValueIn(int pin, int bitlength)
+{
+  byte byteValue = 0;
+  for (int i = 0; i < bitlength; i++)
+  {
+    byteValue = byteValue << 1; // Shift left by 1 position
+    byteValue |= MT2_BitIn(pin); // Add the new bit
+  }
+  return byteValue;
+}
+
+//Returns the signal accepted by the pin
+int MT2_SignalIn(int pin, int bitlength)
+{
+
+  int value;
+  //Is the header incoming?
+  if(MT2_HeaderIn(pin))
+  {
+
+    
+    
+  }
+  
+  
+}
 
 /*
 //Player ID
@@ -179,7 +313,7 @@ void MT2_PlayerID(int pin, int value)
     //Fire each bit
     for(int i=0;i<bitlength;i++)
     {
-      if(value&(1<<i))
+      if(value&(1<<i))s
         MT2_BIN_One(pin);
       else
         MT2_BIN_Zero(pin);
