@@ -49,25 +49,26 @@
 #include "MilesTag2.h"
 
 //Pins
-int GUN_TriggerPin; //Trigger pin.
+int GUN_TriggerPin=2; //Trigger pin.
 bool GUN_TriggerPressed; //Is gun trigger pressed?
 
 
-int GUN_ReloadPin; //Reload pin.
+int GUN_ReloadPin=8; //Reload pin.
 int GUN_SelectorPin; //Selector pin
 //For burst/full auto fire.
 
 int GUN_MagazinePin; //Magazine pin
 
 int GUN_Speaker; //Speaker output pin
-int GUN_Vibro; //Vibro blowback pin
+int GUN_Vibro; //Vibro pin
 
 //Output pins for IR and LED signal.
-int GUN_IR; //IR LED
-int GUN_LED; //LED
+int GUN_IR=3; //IR LED
+int GUN_LED=4; //LED
 ///////////////////////////////////
-// GUN_LED as a shot indicator is set to steady on.
-// GUN_IR is pulsed according to MilesTag 2 or other protocol.
+// GUN_LED as a shot indicator is set to steady on. Gun flare etc.
+// GUN_IR is pulsed according to MilesTag 2 or other protocol. 
+// Instead of firing consistently, it glitters in PWM.
 
 
 // Compatibility
@@ -118,9 +119,9 @@ int GUN_Damage;
 //Fire rate
 int GUN_FireRate; //Fire rate in RPM. Dictates how much time it should fire per minute.
 // Use this calculation:
-// delay((1/(GUN_FireRate/60))/1000)
+// delay((1/(GUN_FireRate/60))*1000)
 // or
-// delay((60/GUN_FireRate)/1000)
+// delay((60/GUN_FireRate)*1000)
 // or
 // delay(60/GUN_FireRate*1000)
 // or
@@ -137,6 +138,7 @@ int GUN_BurstCount; //How much rounds it will burst
 
 //Player parameters
 int HP;
+bool STUNNED;
 
 ////////////
 int MyTeamID;
@@ -301,49 +303,53 @@ void setup() {
 void GUN_Trigger()
 {
 
-  //Trigger logic. Returns when the trigger is pressed.
-  GUN_TriggerPressed=digitalRead(GUN_TriggerPin);
-  if(GUN_TriggerPressed==HIGH)
+  //If not stunned
+  if(!STUNNED)
   {
-    //Check ammo
-    if(GUN_Magazines[0].ammo>0)
+    //Trigger logic. Returns when the trigger is pressed.
+    GUN_TriggerPressed=digitalRead(GUN_TriggerPin);
+    if(GUN_TriggerPressed==HIGH)
     {
-      //Check firemode
-      //If full auto
-      if (GUN_FireMode == GUN_FireMode_AUTO)
+      //Check ammo
+      if(GUN_Magazines[0].ammo>0)
       {
-        //Fire until the mag is empty
-        while(GUN_TriggerPressed)
+        //Check firemode
+        //If full auto
+        if (GUN_FireMode == GUN_FireMode_AUTO)
         {
-          GUN_Fire();
-          Wait((1/(GUN_FireRate/60))/1000);
+          //Fire until the mag is empty
+          while(GUN_TriggerPressed)
+          {
+            GUN_Fire();
+            Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
+          }
+
+
         }
-
-
-      }
-      //If burst
-      else if (GUN_FireMode == GUN_FireMode_BURST)
-      {
-        //Count the burst
-        for(int i=0;i<GUN_BurstCount;i++)
+        //If burst
+        else if (GUN_FireMode == GUN_FireMode_BURST)
         {
-          GUN_Fire();
-          Wait((1/(GUN_FireRate/60))/1000);
-        }
+          //Count the burst
+          for(int i=0;i<GUN_BurstCount;i++)
+          {
+            GUN_Fire();
+            Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
+          }
 
+        }
+        //If semi
+        else
+        {
+          //Fire just once.
+          GUN_Fire();
+          Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
+
+        }
       }
-      //If semi
       else
       {
-        //Fire just once.
-        GUN_Fire();
-        Wait((1/(GUN_FireRate/60))/1000);
-
-      }
-    }
-    else
-    {
           //Play the "click" sound
+      }
     }
   }
 

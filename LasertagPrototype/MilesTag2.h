@@ -160,7 +160,8 @@ int SYS_CarrierFreq=38;
 const int SYS_Pause=600;
 
 
-//Sets PWM to the designated pin
+//Sets PWM frequency to the designated pin
+//Thanks ChatGPT
 void SYS_PWMSet(int pin, int frq)
 {
     switch (pin)
@@ -182,6 +183,7 @@ void SYS_PWMSet(int pin, int frq)
             break;
         default:
             // NOT A PWM PIN
+            Serial.print(pin); Serial.println(" IS NOT A PWM PIN!");
             break;
     }
 }
@@ -354,7 +356,7 @@ void MT2_Fire(int pin, int PlayerID, int Team, int Damage)
     MT2_BIN_Zero(pin); //Zero as a sign bit (it's a gunfire)
     MT2_Signal(pin, 7, PlayerID); //7 bit PlayerID
     MT2_Signal(pin, 2, Team); //2 bit Team ID
-    MT2_Signal(pin, 4, Damage);    
+    MT2_Signal(pin, 4, Damage); //4 bit Damage value    
   }
 }
 
