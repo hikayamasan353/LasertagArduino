@@ -302,7 +302,7 @@ void setup() {
 //Gun trigger operation
 void GUN_Trigger()
 {
-
+  bool hasfired=false; //For semi and burst
   //If not stunned
   if(!STUNNED)
   {
@@ -329,26 +329,51 @@ void GUN_Trigger()
         //If burst
         else if (GUN_FireMode == GUN_FireMode_BURST)
         {
-          //Count the burst
-          for(int i=0;i<GUN_BurstCount;i++)
+          if(!hasfired)
           {
-            GUN_Fire();
-            Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
+            //Count the burst
+            for(int i=0;i<GUN_BurstCount;i++)
+            {
+              GUN_Fire();
+              Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
+            }
+            hasfired=true;
           }
+          else
+          {
+            digitalWrite(GUN_IR, LOW);
+            hasfired=true;
+          }
+          
 
         }
         //If semi
         else
         {
+
+
+
+          
           //Fire just once.
-          GUN_Fire();
-          Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
+
+          if(!hasfired) //If gun has fired
+          {
+            GUN_Fire();
+            Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
+            hasfired=true;
+          }
+          else
+          {
+            //Do not fire
+            digitalWrite(GUN_IR, LOW);
+            hasfired=true;
+          }
 
         }
       }
       else
       {
-          //Play the "click" sound
+          //Play the "click" sound if no ammo
       }
     }
   }
