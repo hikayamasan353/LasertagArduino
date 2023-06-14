@@ -63,7 +63,7 @@ int GUN_Speaker; //Speaker output pin
 int GUN_Vibro; //Vibro pin
 
 //Output pins for IR and LED signal.
-int GUN_IR=3; //IR LED
+int GUN_IR=9; //IR LED
 int GUN_LED=4; //LED
 ///////////////////////////////////
 // GUN_LED as a shot indicator is set to steady on. Gun flare etc.
