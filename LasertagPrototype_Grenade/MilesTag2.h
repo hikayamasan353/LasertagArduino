@@ -4,7 +4,9 @@
 // MilesTag 2 library    //
 // Ver. 0.1a             //
 ///////////////////////////
-#include "Arduino.h"
+#ifndef MilesTag2_H
+#define MilesTag2_H
+#include <Arduino.h>
 //#include "IRremote.h"
 #include "Wait.h"
 #include <GyverPWM.h>
@@ -160,7 +162,7 @@ int SYS_CarrierFreq=38;
 //600 us pause
 const int SYS_Pause=600;
 
-
+/*
 //Sets PWM frequency to the designated pin
 //Thanks ChatGPT
 void SYS_PWMSet(int pin, int frq)
@@ -188,6 +190,7 @@ void SYS_PWMSet(int pin, int frq)
             break;
     }
 }
+*/
 
 
 
@@ -195,11 +198,14 @@ void SYS_PWMSet(int pin, int frq)
 void MT2_Header(int pin)
 {
   //2400 us high
-  //analogWrite(pin,128); 
+  PWM_set(pin, 512);
   PWM_frequency(pin, 38000, FAST_PWM);
-  PWM_set(pin, 512); //Send PWM pulse frequency
+  //Send PWM pulse frequency
+  analogWrite(pin,768);  
   WaitMicroseconds(2400);
+  
   //600 us low
+  PWM_detach(pin);
   digitalWrite(pin, LOW);
   WaitMicroseconds(600);  
 }
@@ -208,11 +214,14 @@ void MT2_Header(int pin)
 void MT2_BIN_Zero(int pin)
 {
   //600 us high
-  //analogWrite(pin,128); //Send PWM pulse frequency
+  PWM_set(pin, 512);
   PWM_frequency(pin, 38000, FAST_PWM);
-  PWM_set(pin, 512); //Send PWM pulse frequency
+   //Send PWM pulse frequency
+  analogWrite(pin,768);
   WaitMicroseconds(600);
+  
   //600 us low
+  PWM_detach(pin);
   digitalWrite(pin, LOW);
   WaitMicroseconds(600);
 }
@@ -220,11 +229,14 @@ void MT2_BIN_Zero(int pin)
 void MT2_BIN_One(int pin)
 {
   //1200 us high
-  //analogWrite(pin,128); //Send PWM pulse frequency
+  PWM_set(pin, 512);
   PWM_frequency(pin, 38000, FAST_PWM);
-  PWM_set(pin, 512); //Send PWM pulse frequency
+  // //Send PWM pulse frequency
+  analogWrite(pin,768);
   WaitMicroseconds(1200);
+  
   //600 us low
+  PWM_detach(pin);
   digitalWrite(pin, LOW);
   WaitMicroseconds(600);
 }
@@ -232,14 +244,15 @@ void MT2_BIN_One(int pin)
 //Sends hex values as binary pulses
 void MT2_Signal(int pin, int bitlength, int value)
 {
-  //Fire each bit
-  for(int i=0;i<bitlength;i++)
+     //Big endian
+     //Fire each bit
+  for(int i=bitlength-1;i>=0;i--)
     {
-      if(value&(1<<i)) //If bit reads one
+      if(bitRead(value, i)==1) //If bit reads one
         MT2_BIN_One(pin);
       else //If bit reads zero
         MT2_BIN_Zero(pin);
-    } 
+    }
 }
 
 
@@ -262,18 +275,24 @@ byte MT2_BitIn(int pin)
 {
   unsigned int pulseDuration=pulseIn(pin, HIGH);
   unsigned int pulsePause=pulseIn(pin, LOW);
-  if((pulseDuration==1200)&&(pulsePause==600))
+  if(pulseDuration==1200)
   {
-    return 0b1;
+    if(pulsePause==600)
+    {
+      return 0b1;
+    }    
   }
-  if((pulseDuration==600)&&(pulsePause==600))
+  else if((pulseDuration==600))
   {
-    return 0b0;
+    if(pulsePause==600)
+    {
+      return 0b0;
+    }
   }
-  if(pulsePause>600)
+  else
   {
     //Out!
-    return 0;
+    return 255;
   }
 }
 
@@ -304,35 +323,6 @@ int MT2_SignalIn(int pin, int bitlength)
   
   
 }
-
-/*
-//Player ID
-//[0ppppppp]
-void MT2_PlayerID(int pin, int value)
-{
-  int bitlength=7; //7 bit value, 0-127
-  if(value>127)
-  {
-    Serial.println("ERROR: Invalid player ID! 0-127");
-  }
-  else
-  {
-    //Send zero as a sign bit
-    MT2_BIN_Zero(pin);
-    //Fire each bit
-    for(int i=0;i<bitlength;i++)
-    {
-      if(value&(1<<i))s
-        MT2_BIN_One(pin);
-      else
-        MT2_BIN_Zero(pin);
-    }
-  }
-}
-
-//Team ID
-//[tt]
-*/
 
 
 
@@ -395,7 +385,7 @@ void MT2_Message(int pin, int MessageID, int Value)
 
 
 
-
+#endif
 ///////////////////////////////
 // SLAVA UKRAINI PUTIN HUILO //
 ///////////////////////////////

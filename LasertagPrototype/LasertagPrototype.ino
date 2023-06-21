@@ -308,7 +308,7 @@ void GUN_Trigger()
   {
     //Trigger logic. Returns when the trigger is pressed.
     GUN_TriggerPressed=digitalRead(GUN_TriggerPin);
-    if(GUN_TriggerPressed==HIGH)
+    while(GUN_TriggerPressed==HIGH)
     {
       //Check ammo
       if(GUN_Magazines[0].ammo>0)
@@ -317,30 +317,29 @@ void GUN_Trigger()
         //If full auto
         if (GUN_FireMode == GUN_FireMode_AUTO)
         {
-          //Fire until the mag is empty
-          while(GUN_TriggerPressed)
-          {
-            GUN_Fire();
+          //Fire indefinitely until the mag is empty
+            GUN_Fire();//Fire
             Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
-          }
 
 
         }
         //If burst
         else if (GUN_FireMode == GUN_FireMode_BURST)
         {
+          //Fire a burst.
           if(!hasfired)
           {
             //Count the burst
             for(int i=0;i<GUN_BurstCount;i++)
             {
-              GUN_Fire();
+              GUN_Fire();//Fire
               Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
             }
             hasfired=true;
           }
           else
           {
+            //Do not fire
             digitalWrite(GUN_IR, LOW);
             hasfired=true;
           }
@@ -349,16 +348,11 @@ void GUN_Trigger()
         }
         //If semi
         else
-        {
-
-
-
-          
+        {         
           //Fire just once.
-
           if(!hasfired) //If gun has fired
           {
-            GUN_Fire();
+            GUN_Fire();//Fire
             Wait((int)((1.0/((float)GUN_FireRate/60.0))*1000.0));
             hasfired=true;
           }
@@ -368,7 +362,6 @@ void GUN_Trigger()
             digitalWrite(GUN_IR, LOW);
             hasfired=true;
           }
-
         }
       }
       else
