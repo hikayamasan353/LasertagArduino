@@ -54,6 +54,20 @@ void setup() {
 
 }
 
+//Fire a gun
+void GUN_Fire()
+{
+      //MT2_Fire(emitter,playerid,team,damage); does not work
+      //this works!
+      //Gunfire code
+      //0ppppppp-ttdddd
+      //Todo:Implement MilesTag 2 protocol as a Sony variation
+      unsigned long packet = (((playerid << 2) | team) << 4) | damage;
+      emitter.sendSony(packet, 14);//Send as Sony SIRC
+      Wait((int)((1.0/((float)firerate/60.0))*1000.0));//Gun fire rate
+      ammo-=1;//Round away
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
 
@@ -65,16 +79,7 @@ void loop() {
     //Todo:Implement semi and auto switch
     if(ammo>0)
     {
-    //MT2_Fire(emitter,playerid,team,damage); does not work
-
-
-      //this works!
-      //Gunfire code
-      //0ppppppp-ttdddd
-      //Todo:Implement MilesTag 2 protocol as a Sony variation
-      unsigned long packet = (((playerid << 2) | team) << 4) | damage;
-      emitter.sendSony(packet, 14);//Send as Sony SIRC
-      Wait((int)((1.0/((float)firerate/60.0))*1000.0));//Gun fire rate
+      GUN_Fire();
 
 
       ammo-=1;//Round away
