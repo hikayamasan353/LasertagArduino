@@ -54,6 +54,8 @@ void setup() {
   //Todo:Pinout
   sensor.enableIRIn();
 
+  pinMode(6,INPUT);
+  //pinMode(7,OUTPUT);
   Serial.begin(9600);
 
 }
@@ -104,21 +106,16 @@ void GUN_Trigger()
 void loop() {
   // put your main code here, to run repeatedly:
 
-  if(digitalRead(GUN_FireModePin)==HIGH)
-    GUN_FireMode=1;
-  else
-    GUN_FireMode=0;
+  GUN_FireMode=digitalRead(6);
+  //digitalWrite(7,GUN_FireMode);
+
 
 //////////////////////////////////////////////////////
   //Trigger operation
-  /*
-  if(digitalRead(GUN_TriggerPin)==HIGH)//Trigger
-  {
-    //Todo:Implement semi and auto switch
-    GUN_Trigger();
-  }
-  */
+  
+  
   GUN_Trigger();
+  
 
   if(digitalRead(GUN_Reload)==HIGH)//Reload;
   {
