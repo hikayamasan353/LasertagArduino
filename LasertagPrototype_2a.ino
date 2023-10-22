@@ -75,25 +75,24 @@ void GUN_Fire()
 void GUN_Trigger()
 {
   bool hasfired=false;
-  if(digitalRead(GUN_TriggerPin)==HIGH)
+  while(digitalRead(GUN_TriggerPin)==HIGH)
   {
     if(ammo>0)
     {
-      if(GUN_FireMode==1) //If full auto
+      if(GUN_FireMode==1)
       {
-          GUN_Fire(); //Keep firing until mag is empty
+          GUN_Fire();
       }
-      else //If semi
+      else
       {
-        //Semi auto fire mode
-        if(!hasfired)//If gun has not fired
+
+        if(!hasfired)
         {
-          GUN_Fire(); //Fire a gun
+          GUN_Fire();
           hasfired=true;
         }
         else
         {
-          //Do not fire
           hasfired=true;
         }
       }
@@ -112,6 +111,13 @@ void loop() {
 
 //////////////////////////////////////////////////////
   //Trigger operation
+  /*
+  if(digitalRead(GUN_TriggerPin)==HIGH)//Trigger
+  {
+    //Todo:Implement semi and auto switch
+    GUN_Trigger();
+  }
+  */
   GUN_Trigger();
 
   if(digitalRead(GUN_Reload)==HIGH)//Reload;
