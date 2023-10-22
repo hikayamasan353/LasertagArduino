@@ -10,7 +10,7 @@ Pinout:
 3-IR emitter
 4-Trigger
 5-Reload
-6-
+6-Selective fire
 7-
 8-
 9-
@@ -20,8 +20,9 @@ Pinout:
 13-
 */
 IRsend emitter(3); //Emitter for the gun
-int GUN_Trigger=4; //Trigger
+int GUN_TriggerPin=4; //Trigger
 int GUN_Reload=5; //Reload pin
+int GUN_FireModePin=6;//Selective fire mode, 0 - semi, 1 - auto
 
 IRrecv sensor(8); //Gun sensor signal
 decode_results results;
@@ -32,6 +33,8 @@ int playerid=95; //Player ID 0-127
 int team=2; //Team ID 0-3
 //Gun damage
 int damage=15; //Gun damage 0-15
+
+int GUN_FireMode;//0 - semi, 1 - auto
 
 int hp;//Health
 //Todo: Implement damage
@@ -45,8 +48,9 @@ int firerate=600; //Fire rate, rounds per minute
 void setup() {
   // put your setup code here, to run once:
   //Test
-  pinMode(GUN_Trigger,INPUT);//Trigger
+  pinMode(GUN_TriggerPin,INPUT);//Trigger
   pinMode(GUN_Reload,INPUT);//Reload
+  pinMode(GUN_FireModePin,INPUT);//Select fire
   //Todo:Pinout
   sensor.enableIRIn();
 
@@ -68,25 +72,54 @@ void GUN_Fire()
       ammo-=1;//Round away
 }
 
+void GUN_Trigger()
+{
+  bool hasfired=false;
+  while(digitalRead(GUN_TriggerPin)==HIGH)
+  {
+    if(ammo>0)
+    {
+      if(GUN_FireMode==1)
+      {
+          GUN_Fire();
+      }
+      else
+      {
+
+        if(!hasfired)
+        {
+          GUN_Fire();
+          hasfired=true;
+        }
+        else
+        {
+          hasfired=true;
+        }
+      }
+    }
+  }
+
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
 
+  if(digitalRead(GUN_FireModePin)==HIGH)
+    GUN_FireMode=1;
+  else
+    GUN_FireMode=0;
+
 //////////////////////////////////////////////////////
   //Trigger operation
-  if(digitalRead(GUN_Trigger)==HIGH)//Trigger
+  /*
+  if(digitalRead(GUN_TriggerPin)==HIGH)//Trigger
   {
-
     //Todo:Implement semi and auto switch
-    if(ammo>0)
-    {
-      GUN_Fire();
-
-
-      ammo-=1;//Round away
-    }
-
-
+    GUN_Trigger();
   }
+  */
+  GUN_Trigger();
+
   if(digitalRead(GUN_Reload)==HIGH)//Reload;
   {
     ammo=30;
@@ -157,14 +190,5 @@ void loop() {
       Serial.println("Invalid packet!!!");
       sensor.resume();
     }
-
-
-
-
-
-
-
-
-
   }
 }
