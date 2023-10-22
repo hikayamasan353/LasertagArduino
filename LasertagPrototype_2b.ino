@@ -54,7 +54,6 @@ void setup() {
   //Todo:Pinout
   sensor.enableIRIn();
 
-  pinMode(6,INPUT);
   //pinMode(7,OUTPUT);
   Serial.begin(9600);
 
@@ -103,10 +102,59 @@ void GUN_Trigger()
 
 }
 
+int SYS_Damage2HP(int damage)
+{
+  switch(damage)
+  {
+    case 0:
+      return 1;
+    case 1:
+      return 2;
+    case 2:
+      return 4;
+    case 3:
+      return 5;
+    case 4:
+      return 7;
+    case 5:
+      return 10;
+    case 6:
+      return 15;
+    case 7:
+      return 17;
+    case 8:
+      return 20;
+    case 9:
+      return 25;
+    case 10:
+      return 30;
+    case 11:
+      return 35;
+    case 12:
+      return 40;
+    case 13:
+      return 50;
+    case 14:
+      return 75;
+    case 15:
+      return 100;
+  }
+}
+
+void SYS_Dead()
+{
+
+}
+
+void SYS_Respawn()
+{
+  hp=100;
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
 
-  GUN_FireMode=digitalRead(6);
+  GUN_FireMode=digitalRead(GUN_FireModePin);
   //digitalWrite(7,GUN_FireMode);
 
 
