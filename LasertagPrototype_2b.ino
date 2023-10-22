@@ -76,17 +76,23 @@ void GUN_Fire()
 void GUN_Trigger()
 {
   bool hasfired=false;
-  while(digitalRead(GUN_TriggerPin)==HIGH)
+  if(GUN_FireMode==1)
   {
-    if(ammo>0)
+    if(digitalRead(GUN_TriggerPin)==HIGH)
     {
-      if(GUN_FireMode==1)
+      if(ammo>0)
       {
-          GUN_Fire();
+        GUN_Fire();
       }
-      else
-      {
+    }
 
+  }
+  else
+  {
+    while(digitalRead(GUN_TriggerPin)==HIGH)
+    {
+      if(ammo>0)
+      {
         if(!hasfired)
         {
           GUN_Fire();
@@ -97,7 +103,9 @@ void GUN_Trigger()
           hasfired=true;
         }
       }
+
     }
+
   }
 
 }
