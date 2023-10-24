@@ -33,10 +33,7 @@ void GREN_Detonate()
   //MilesTag 2 explode player
   // [Header]-0x83-0x0B-0xE8
   unsigned long packet=((0x83<<8)&0x0b)<<8&0xE8;
-  GREN_Emitter.sendSony(packet,24);
-
-  //MT2_Message(GREN_Emitter, 0x83, 0x0b);
-  // TODO: 0x83-0x0b
+  GREN_Emitter.sendSony(packet,24); //sony SIRC have same timings as MT2
   //TODO: BANG!!!! BOOOM!!! BAMMMM!!!!
   
 }
