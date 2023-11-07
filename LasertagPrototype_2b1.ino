@@ -5,15 +5,15 @@
 //TODO: Pinout
 /*
 Pinout:
-0-
-1-
+0-RXD
+1-TXD
 2-
 3-IR emitter
 4-Trigger
 5-Reload
 6-Selective fire
 7-
-8-
+8-Sensor
 9-
 10-
 11-
@@ -45,7 +45,7 @@ int hp;//Health
 
 int mag_count=3;
 int mag_capacity=30;
-int ammo[3];
+int ammo[10];//Max magazines - 10
 
 int ammo_total()
 {
@@ -80,7 +80,7 @@ void setup() {
   ResetMagazines();
 
   //pinMode(7,OUTPUT);
-  Serial.begin(19200);
+  Serial.begin(9600);
 
 }
 
@@ -238,6 +238,19 @@ void loop() {
         Serial.print("Value: ");Serial.println(incoming_value,HEX);
 
         //Todo: Process messages
+        //0x8306E8 - Full ammo
+        //0x830DE8 - Full HP
+
+        //Commands
+        if(incoming_message=0x83)
+        {
+          //Full ammo
+          if(incoming_value=0x06)
+          {
+            ResetMagazines();
+          }
+
+        }
       }
       else
       {
