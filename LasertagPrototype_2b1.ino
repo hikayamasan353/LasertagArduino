@@ -1,4 +1,5 @@
 #include "Wait.h"
+#include "BubbleSort.h"
 #include <IRremote.hpp>
 
 //TODO: Pinout
@@ -40,7 +41,29 @@ int hp;//Health
 //Todo: Implement damage
 
 //Todo: Implement magazines
-int ammo=30;
+//int ammo=30;
+
+int mag_count=3;
+int mag_capacity=30;
+int ammo[3];
+
+int ammo_total()
+{
+  int a;
+  for(int i=0;i<mag_count;i++)
+  {
+    a+=ammo[i];
+  }
+  return a;
+}
+
+void ResetMagazines()
+{
+  for(int i=0;i<mag_count;i++)
+  {
+    ammo[i]=mag_capacity;
+  }
+}
 
 int firerate=600; //Fire rate, rounds per minute
 
@@ -54,8 +77,10 @@ void setup() {
   //Todo:Pinout
   sensor.enableIRIn();
 
+  ResetMagazines();
+
   //pinMode(7,OUTPUT);
-  Serial.begin(9600);
+  Serial.begin(19200);
 
 }
 
@@ -70,28 +95,31 @@ void GUN_Fire()
       unsigned long packet = (((playerid << 2) | team) << 4) | damage;
       emitter.sendSony(packet, 14);//Send as Sony SIRC
       Wait((int)((1.0/((float)firerate/60.0))*1000.0));//Gun fire rate
-      ammo-=1;//Round away
+      ammo[0]-=1;//Round away
+
+      int i=ammo[0];
+      Serial.print(i);Serial.print("/");Serial.println(ammo_total());
 }
 
 void GUN_Trigger()
 {
   bool hasfired=false;
-  if(GUN_FireMode==1)
+  if(GUN_FireMode==1)//If full auto
   {
     if(digitalRead(GUN_TriggerPin)==HIGH)
     {
-      if(ammo>0)
+      if(ammo[0]>0)
       {
         GUN_Fire();
       }
     }
 
   }
-  else
+  else //If semi
   {
     while(digitalRead(GUN_TriggerPin)==HIGH)
     {
-      if(ammo>0)
+      if(ammo[0]>0)
       {
         if(!hasfired)
         {
@@ -175,7 +203,11 @@ void loop() {
 
   if(digitalRead(GUN_Reload)==HIGH)//Reload;
   {
-    ammo=30;
+    //ammo=30;
+    //Serial.print(ammo);
+    //Resort the magazines
+    BubbleSort(ammo,mag_count);
+
   }
   ////////////////////////////////////////////////////////
 
