@@ -12,8 +12,8 @@ Pinout:
 4-Trigger
 5-Reload
 6-Selective fire
-7-
-8-Sensor
+7-Vibration/LED (to sensors)
+8-Sensor signal
 9-
 10-
 11-
@@ -24,6 +24,7 @@ IRsend emitter(3); //Emitter for the gun
 int GUN_TriggerPin=4; //Trigger
 int GUN_Reload=5; //Reload pin
 int GUN_FireModePin=6;//Selective fire mode, 0 - semi, 1 - auto
+int GUN_VibroLEDPin=7;
 
 IRrecv sensor(8); //Gun sensor signal
 decode_results results;
@@ -74,7 +75,7 @@ void setup() {
   pinMode(GUN_TriggerPin,INPUT);//Trigger
   pinMode(GUN_Reload,INPUT);//Reload
   pinMode(GUN_FireModePin,INPUT);//Select fire
-  //Todo:Pinout
+  pinMode(GUN_VibroLEDPin,OUTPUT);
   sensor.enableIRIn();
 
   ResetMagazines();
@@ -177,8 +178,14 @@ int SYS_Damage2HP(int damage)
   }
 }
 
+//If the player is dead
 void SYS_Dead()
 {
+
+  //10 second vibration
+  digitalWrite(GUN_VibroLEDPin,HIGH);
+  Wait(10000);
+  digitalWrite(GUN_VibroLEDPin,LOW);
 
 }
 
@@ -278,6 +285,12 @@ void loop() {
       Serial.print(incoming_damage);Serial.println(" damage");
 
       //Todo: Vibration motor
+
+      //1 second vibration
+      digitalWrite(GUN_VibroLEDPin,HIGH);
+      Wait(1000);
+      digitalWrite(GUN_VibroLEDPin,LOW);
+      //TODO: 10 second vibration if dead
       //Todo: HP and respawn
     
       sensor.resume();
