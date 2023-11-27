@@ -259,6 +259,8 @@ void loop() {
         if(incoming_message=0x80)
         {
 
+          hp+=incoming_value;
+
           Serial.print("Add health ");Serial.println(incoming_value);
 
         }
@@ -394,6 +396,8 @@ void loop() {
           //0x830DE8
           if(incoming_value=0x0D)
           {
+            //temp code
+            hp=100;
 
             Serial.println("Full health");
           }
@@ -433,6 +437,11 @@ void loop() {
           //Disarm player (set ammo to 0)
           if(incoming_value=0x17)
           {
+
+            for(int i=0;i<mag_count;i++)
+            {
+              ammo[i]=0;
+            }
 
             Serial.println("Disarm player");
           }
