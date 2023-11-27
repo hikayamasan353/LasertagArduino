@@ -2,6 +2,9 @@
 #include "BubbleSort.h"
 #include <IRremote.hpp>
 
+//////////
+// Laser tag gun prototype
+
 //TODO: Pinout
 /*
 Pinout:
@@ -263,6 +266,32 @@ void loop() {
         //0x81xxE8, where xx=0x01 to 0x64 (0-100)
         if(incoming_message=0x81)
         {
+          int ammo2=incoming_value;
+          //Take each magazine
+          for(int i=0;i<mag_count;i++)
+          {
+            //If magazine is full already
+            if(ammo[i]==mag_capacity)
+              i++;//Move on
+            else //If empty
+            {
+              //How many rounds should we add? Obviously less than already is there! 
+              int ammo3=mag_capacity-ammo[i];
+              ammo2-=ammo3; //Take away rounds to add
+              //If out of ammo to add
+              if(ammo2<=0)
+                break;
+              else
+                ammo[i]+=ammo3; //Add the lacking rounds
+
+
+
+
+            }
+
+          }
+
+
           Serial.print("Add ammo ");Serial.println(incoming_value);
         }
         //0x82 - Reserved
