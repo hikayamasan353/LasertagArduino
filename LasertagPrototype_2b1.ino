@@ -44,10 +44,12 @@ int hp;//Health
 //Todo: Implement magazines
 //int ammo=30;
 
-int mag_count=3;
-int mag_capacity=30;
-int ammo[10];//Max magazines - 10
+int mag_count=3; //Total amount of magazines
+int mag_capacity=30; //Capacity of each magazine
+int ammo[10];//Max magazines - 10 (currently for testing)
+//Note: C++ array index must be constant, mag_count shouldn't be less than array size!!!
 
+//Total amount of ammo in all magazines
 int ammo_total()
 {
   int a;
@@ -58,7 +60,8 @@ int ammo_total()
   return a;
 }
 
-void ResetMagazines()
+//Rearm magazines by providing full ammo to player
+void FullAmmo()
 {
   for(int i=0;i<mag_count;i++)
   {
@@ -78,7 +81,8 @@ void setup() {
   pinMode(GUN_VibroLEDPin,OUTPUT);
   sensor.enableIRIn();
 
-  ResetMagazines();
+  //Fill magazines up initially
+  FullAmmo();
 
   //pinMode(7,OUTPUT);
   Serial.begin(9600);
@@ -88,13 +92,12 @@ void setup() {
 //Fire a gun
 void GUN_Fire()
 {
-      //MT2_Fire(emitter,playerid,team,damage); does not work
       //this works!
       //Gunfire code
       //0ppppppp-ttdddd
       //Todo:Implement MilesTag 2 protocol as a Sony variation
       unsigned long packet = (((playerid << 2) | team) << 4) | damage;
-      emitter.sendSony(packet, 14);//Send as Sony SIRC
+      emitter.sendSony(packet, 14);//Send as Sony SIRC (MilesTag 2 is Sony SIRC variant with MSB first)
       Wait((int)((1.0/((float)firerate/60.0))*1000.0));//Gun fire rate
       ammo[0]-=1;//Round away
 
@@ -197,6 +200,7 @@ void SYS_Respawn()
 void loop() {
   // put your main code here, to run repeatedly:
 
+  //Check firemode (HIGH if full auto)
   GUN_FireMode=digitalRead(GUN_FireModePin);
   //digitalWrite(7,GUN_FireMode);
 
@@ -208,11 +212,12 @@ void loop() {
   GUN_Trigger();
   
 
-  if(digitalRead(GUN_Reload)==HIGH)//Reload;
+  //Reloading the gun
+  if(digitalRead(GUN_Reload)==HIGH)
   {
     //ammo=30;
     //Serial.print(ammo);
-    //Resort the magazines
+    //Resort the magazines by using bubble sort
     BubbleSort(ammo,mag_count);
 
   }
@@ -245,17 +250,164 @@ void loop() {
         Serial.print("Value: ");Serial.println(incoming_value,HEX);
 
         //Todo: Process messages
-        //0x8306E8 - Full ammo
-        //0x830DE8 - Full HP
 
+        //0x80 - Add health 0-100
+        //0x80xxE8, where xx=0x01 to 0x64 (0-100)
+        if(incoming_message=0x80)
+        {
+
+          Serial.print("Add health ");Serial.println(incoming_value);
+
+        }
+        //0x81 - Add ammo
+        //0x81xxE8, where xx=0x01 to 0x64 (0-100)
+        if(incoming_message=0x81)
+        {
+          Serial.print("Add ammo ");Serial.println(incoming_value);
+        }
+        //0x82 - Reserved
+        //0x83 - Command
         //Commands
         if(incoming_message=0x83)
         {
+          //Admin kill
+          //0x8300E8
+          if(incoming_value=0x00)
+          {
+            //temp code
+            hp=0; //Kill the player
+            Serial.println("Admin kill");
+          }
+          //Pause/Unpause
+          //0x8301E8
+          if(incoming_value=0x01)
+          {
+
+            Serial.println("Pause/Unpause");
+          }
+          //Start game (delayed)
+          //0x8302E8
+          if(incoming_value=0x02)
+          {
+
+            Serial.println("Start game (delayed)");
+          }
+          //Restore default settings
+          //0x8303E8
+          if(incoming_value=0x03)
+          {
+
+            Serial.println("Factory reset (restore default settings)");
+          }
+          //Respawn
+          //0x8304E8
+          if(incoming_value=0x04)
+          {
+
+            Serial.println("Respawn");
+          }
+          //Start game (immediately)
+          //0x8305E8
+          if(incoming_value=0x05)
+          {
+
+            Serial.println("Start game (immediately)");
+          }
           //Full ammo
+          //0x8306E8
           if(incoming_value=0x06)
           {
-            ResetMagazines();
+            //Rearm the player's magazines
+            FullAmmo();
+            Serial.println("Full ammo");
           }
+          //End game (game over)
+          //0x8307E8
+          if(incoming_value=0x07)
+          {
+
+            Serial.println("Game over");
+          }
+          //Reset clock
+          //0x8308E8
+          if(incoming_value=0x08)
+          {
+
+            Serial.println("Reset clock");
+          }
+          //0x8309E8 - Reserved
+
+          //Initialize player
+          //0x830AE8
+          if(incoming_value=0x0A)
+          {
+
+            Serial.println("Initialize player");
+          }
+          //Explosion
+          //0x830BE8
+          if(incoming_value=0x0B)
+          {
+            //temp code
+            hp=0;//Kill the player
+            //Todo: Explosion sound
+
+            Serial.println("Explosion");
+          }
+          //Initialize new game
+          //0x830CE8
+          if(incoming_value=0x0C)
+          {
+
+            Serial.println("Initialize new game");
+          }
+          //Full HP
+          //0x830DE8
+          if(incoming_value=0x0D)
+          {
+
+            Serial.println("Full health");
+          }
+          //0x830EE8 - Reserved
+          //Full armour
+          //0x830FE8
+          if(incoming_value=0x0F)
+          {
+
+            Serial.println("Full armour");
+          }
+          //0x8310E8 - Reserved
+          //0x8311E8 - Reserved
+          //0x8312E8 - Reserved
+          //0x8313E8 - Reserved
+          //Reset score
+          //0x8314E8
+          if(incoming_value=0x14)
+          {
+
+            Serial.println("Reset score");
+          }
+          //Sensor test
+          //0x8315E8
+          if(incoming_value=0x15)
+          {
+
+            Serial.println("Sensor test");
+          }
+          //Stun player
+          //0x8316E8
+          if(incoming_value=0x16)
+          {
+
+            Serial.println("Stun player");
+          }
+          //Disarm player (set ammo to 0)
+          if(incoming_value=0x17)
+          {
+
+            Serial.println("Disarm player");
+          }
+
 
         }
       }
