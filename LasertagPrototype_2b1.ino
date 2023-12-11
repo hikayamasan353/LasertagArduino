@@ -10,7 +10,7 @@
 Pinout:
 0-RXD
 1-TXD
-2-
+2-Muzzle flash
 3-IR emitter
 4-Trigger
 5-Reload
@@ -23,6 +23,7 @@ Pinout:
 12-
 13-
 */
+int GUN_FlashPin=2; //Muzzle flash pin
 IRsend emitter(3); //Emitter for the gun
 int GUN_TriggerPin=4; //Trigger
 int GUN_Reload=5; //Reload pin
@@ -31,6 +32,8 @@ int GUN_VibroLEDPin=7;
 
 IRrecv sensor(8); //Gun sensor signal
 decode_results results;
+
+
 
 
 //Player, team
@@ -78,6 +81,7 @@ int firerate=600; //Fire rate, rounds per minute
 void setup() {
   // put your setup code here, to run once:
   //Test
+  pinMode(GUN_FlashPin,OUTPUT);//Muzzle flash
   pinMode(GUN_TriggerPin,INPUT);//Trigger
   pinMode(GUN_Reload,INPUT);//Reload
   pinMode(GUN_FireModePin,INPUT);//Select fire
@@ -99,8 +103,10 @@ void GUN_Fire()
       //Gunfire code
       //0ppppppp-ttdddd
       //Todo:Implement MilesTag 2 protocol as a Sony variation
+      digitalWriteFast(GUN_FlashPin,HIGH);
       unsigned long packet = (((playerid << 2) | team) << 4) | damage;
       emitter.sendSony(packet, 14);//Send as Sony SIRC (MilesTag 2 is Sony SIRC variant with MSB first)
+      digitalWriteFast(GUN_FlashPin,LOW);
       Wait((int)((1.0/((float)firerate/60.0))*1000.0));//Gun fire rate
       ammo[0]-=1;//Round away
 
