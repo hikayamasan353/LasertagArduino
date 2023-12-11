@@ -481,11 +481,12 @@ void loop() {
       Serial.print(incoming_damage);Serial.println(" damage");
 
       //Todo: Vibration motor
-
-      //1 second vibration
       digitalWrite(GUN_VibroLEDPin,HIGH);
-      Wait(1000);
       digitalWrite(GUN_VibroLEDPin,LOW);
+
+
+
+      //digitalWrite(GUN_VibroLEDPin,LOW);
       //TODO: 10 second vibration if dead
       //Todo: HP and respawn
     
