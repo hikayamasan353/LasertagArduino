@@ -46,6 +46,7 @@ int GUN_FireMode;//0 - semi, 1 - auto
 
 int hp;//Health
 //Todo: Implement damage
+bool hit=false;
 
 //Todo: Implement magazines
 //int ammo=30;
@@ -231,6 +232,14 @@ void loop() {
 
   }
   ////////////////////////////////////////////////////////
+
+  if(hit)
+  {
+      digitalWrite(GUN_VibroLEDPin,HIGH);
+      Wait(1000);
+      digitalWrite(GUN_VibroLEDPin,LOW);
+      hit=!hit;
+  }
 
   //Check sensors
   //this works!!!
@@ -431,7 +440,16 @@ void loop() {
           if(incoming_value=0x15)
           {
 
+            //Blink and vibrate for 1 second
+
+            digitalWrite(GUN_VibroLEDPin,HIGH);
+            Wait(1000);
+            digitalWrite(GUN_VibroLEDPin,LOW);
+
             Serial.println("Sensor test");
+
+
+
           }
           //Stun player
           //0x8316E8
@@ -481,8 +499,8 @@ void loop() {
       Serial.print(incoming_damage);Serial.println(" damage");
 
       //Todo: Vibration motor
-      digitalWrite(GUN_VibroLEDPin,HIGH);
-      digitalWrite(GUN_VibroLEDPin,LOW);
+
+      hit=true;
 
 
 
