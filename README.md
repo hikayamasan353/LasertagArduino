@@ -11,3 +11,4 @@ Currently, only gun and grenade code is available publicly. There will be other 
 
 Arduinoようのレーザーサバゲのシステムです。
 まだ不完全です。MilesTag2のプロトコルを使っています。
+今まだ、鉄砲と手榴弾だけのコードは公開されました。
