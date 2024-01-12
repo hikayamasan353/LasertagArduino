@@ -48,6 +48,9 @@ int hp;//Health
 //Todo: Implement damage
 bool hit=false;
 
+//Is the game active?
+bool game_active=false;
+
 //Todo: Implement magazines
 //int ammo=30;
 
@@ -88,6 +91,10 @@ void setup() {
   pinMode(GUN_FireModePin,INPUT);//Select fire
   pinMode(GUN_VibroLEDPin,OUTPUT);
   sensor.enableIRIn();
+
+
+  //Debug
+  pinMode(13,OUTPUT);
 
   //Fill magazines up initially
   FullAmmo();
@@ -210,36 +217,40 @@ void SYS_Respawn()
 void loop() {
   // put your main code here, to run repeatedly:
 
-  //Check firemode (HIGH if full auto)
-  GUN_FireMode=digitalRead(GUN_FireModePin);
+
   //digitalWrite(7,GUN_FireMode);
 
+  //Debug
+  digitalWrite(13,game_active);
 
-//////////////////////////////////////////////////////
-  //Trigger operation
-  
-  
-  GUN_Trigger();
-  
 
-  //Reloading the gun
-  if(digitalRead(GUN_Reload)==HIGH)
+  //Run the game
+  if(game_active)
   {
-    //ammo=30;
-    //Serial.print(ammo);
-    //Resort the magazines by using bubble sort
-    BubbleSort(ammo,mag_count);
+    //Check firemode (HIGH if full auto)
+    GUN_FireMode=digitalRead(GUN_FireModePin);
+    //Trigger operation
+    GUN_Trigger();
+      //Reloading the gun
+    if(digitalRead(GUN_Reload)==HIGH)
+    {
+      //Serial.print(ammo);
+      //Resort the magazines by using bubble sort
+      BubbleSort(ammo,mag_count);
 
-  }
-  ////////////////////////////////////////////////////////
-
-  if(hit)
-  {
+    }
+    //Hit indication
+    if(hit)
+    {
       digitalWrite(GUN_VibroLEDPin,HIGH);
       Wait(1000);
       digitalWrite(GUN_VibroLEDPin,LOW);
       hit=!hit;
+    }
+
+
   }
+
 
   //Check sensors
   //this works!!!
@@ -339,6 +350,11 @@ void loop() {
           if(incoming_value==0x02)
           {
 
+            //Temp code: Start the game
+            //Set the game to active
+            game_active=true;
+            //Give full ammo to the player
+            FullAmmo();
             Serial.println("Start game (delayed)");
           }
           //Restore default settings
@@ -359,7 +375,12 @@ void loop() {
           //0x8305E8
           if(incoming_value==0x05)
           {
-
+            //Temp code: Start the game
+            //Set the game to active
+            game_active=true;
+            //Give full ammo to the player
+            FullAmmo();
+            ///////////////////
             Serial.println("Start game (immediately)");
           }
           //Full ammo
@@ -374,7 +395,8 @@ void loop() {
           //0x8307E8
           if(incoming_value==0x07)
           {
-
+            //Temp code
+            game_active=false;
             Serial.println("Game over");
           }
           //Reset clock
@@ -514,7 +536,8 @@ void loop() {
     else
     {
       //Invalid packet
-      Serial.println("Invalid packet!!!");
+      Serial.println(packet,BIN);
+      Serial.println("Invalid packet!!!");      
       sensor.resume();
     }
   }
