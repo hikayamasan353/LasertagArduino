@@ -256,9 +256,12 @@ void loop() {
       //Decode a service message
       //Check if it ends with 0xE8
       unsigned long E8_mask=0b000000000000000011111111;
-      if(packet&E8_mask==0xE8)
+      Serial.println(packet,HEX);
+      if((packet&E8_mask)==0xE8)
       {
+        //Incoming message ID. Should be equal or greater than 0x80 since the first (most significant) bit is 1.
         unsigned long incoming_message=(packet&0b111111110000000000000000)>>16;
+        //Incoming message value.
         unsigned long incoming_value=(packet&0b1111111100000000)>>8;
 
 
@@ -267,11 +270,11 @@ void loop() {
         Serial.print("Message: ");Serial.println(incoming_message,HEX);
         Serial.print("Value: ");Serial.println(incoming_value,HEX);
 
-        //Todo: Process messages
+        //Process messages
 
         //0x80 - Add health 0-100
         //0x80xxE8, where xx=0x01 to 0x64 (0-100)
-        if(incoming_message=0x80)
+        if(incoming_message==0x80)
         {
 
           hp+=incoming_value;
@@ -281,7 +284,7 @@ void loop() {
         }
         //0x81 - Add ammo
         //0x81xxE8, where xx=0x01 to 0x64 (0-100)
-        if(incoming_message=0x81)
+        if(incoming_message==0x81)
         {
           int ammo2=incoming_value;
           //Take each magazine
@@ -314,11 +317,11 @@ void loop() {
         //0x82 - Reserved
         //0x83 - Command
         //Commands
-        if(incoming_message=0x83)
+        if(incoming_message==0x83)
         {
           //Admin kill
           //0x8300E8
-          if(incoming_value=0x00)
+          if(incoming_value==0x00)
           {
             //temp code
             hp=0; //Kill the player
@@ -326,42 +329,42 @@ void loop() {
           }
           //Pause/Unpause
           //0x8301E8
-          if(incoming_value=0x01)
+          if(incoming_value==0x01)
           {
 
             Serial.println("Pause/Unpause");
           }
           //Start game (delayed)
           //0x8302E8
-          if(incoming_value=0x02)
+          if(incoming_value==0x02)
           {
 
             Serial.println("Start game (delayed)");
           }
           //Restore default settings
           //0x8303E8
-          if(incoming_value=0x03)
+          if(incoming_value==0x03)
           {
 
             Serial.println("Factory reset (restore default settings)");
           }
           //Respawn
           //0x8304E8
-          if(incoming_value=0x04)
+          if(incoming_value==0x04)
           {
 
             Serial.println("Respawn");
           }
           //Start game (immediately)
           //0x8305E8
-          if(incoming_value=0x05)
+          if(incoming_value==0x05)
           {
 
             Serial.println("Start game (immediately)");
           }
           //Full ammo
           //0x8306E8
-          if(incoming_value=0x06)
+          if(incoming_value==0x06)
           {
             //Rearm the player's magazines
             FullAmmo();
@@ -369,14 +372,14 @@ void loop() {
           }
           //End game (game over)
           //0x8307E8
-          if(incoming_value=0x07)
+          if(incoming_value==0x07)
           {
 
             Serial.println("Game over");
           }
           //Reset clock
           //0x8308E8
-          if(incoming_value=0x08)
+          if(incoming_value==0x08)
           {
 
             Serial.println("Reset clock");
@@ -385,14 +388,14 @@ void loop() {
 
           //Initialize player
           //0x830AE8
-          if(incoming_value=0x0A)
+          if(incoming_value==0x0A)
           {
 
             Serial.println("Initialize player");
           }
           //Explosion
           //0x830BE8
-          if(incoming_value=0x0B)
+          if(incoming_value==0x0B)
           {
             //temp code
             hp=0;//Kill the player
@@ -402,14 +405,14 @@ void loop() {
           }
           //Initialize new game
           //0x830CE8
-          if(incoming_value=0x0C)
+          if(incoming_value==0x0C)
           {
 
             Serial.println("Initialize new game");
           }
           //Full HP
           //0x830DE8
-          if(incoming_value=0x0D)
+          if(incoming_value==0x0D)
           {
             //temp code
             hp=100;
@@ -419,7 +422,7 @@ void loop() {
           //0x830EE8 - Reserved
           //Full armour
           //0x830FE8
-          if(incoming_value=0x0F)
+          if(incoming_value==0x0F)
           {
 
             Serial.println("Full armour");
@@ -430,14 +433,14 @@ void loop() {
           //0x8313E8 - Reserved
           //Reset score
           //0x8314E8
-          if(incoming_value=0x14)
+          if(incoming_value==0x14)
           {
 
             Serial.println("Reset score");
           }
           //Sensor test
           //0x8315E8
-          if(incoming_value=0x15)
+          if(incoming_value==0x15)
           {
 
             //Blink and vibrate for 1 second
@@ -453,13 +456,13 @@ void loop() {
           }
           //Stun player
           //0x8316E8
-          if(incoming_value=0x16)
+          if(incoming_value==0x16)
           {
 
             Serial.println("Stun player");
           }
           //Disarm player (set ammo to 0)
-          if(incoming_value=0x17)
+          if(incoming_value==0x17)
           {
 
             for(int i=0;i<mag_count;i++)
@@ -469,17 +472,15 @@ void loop() {
 
             Serial.println("Disarm player");
           }
-
-
         }
+
       }
       else
       {
         //Invalid packet!
-        Serial.println("Invalid packet!!!");
-        sensor.resume();
+        Serial.print("Invalid message packet!!!");
       }
-
+      sensor.resume();
     }
     ////////////////////////////
     //Gunfire packet is 14 bits
