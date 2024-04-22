@@ -40,16 +40,18 @@ decode_results results;
 int playerid=95; //Player ID 0-127
 int team=2; //Team ID 0-3
 //Gun damage
-int damage=15; //Gun damage 0-15
+int damage=10; //Gun damage 0-15
+//TODO: Implement player ID, team ID and damage configuration
 
 int GUN_FireMode;//0 - semi, 1 - auto
 
-int hp;//Health
+int hp=100;//Health
 //Todo: Implement damage
 bool hit=false;
 
 //Is the game active?
 bool game_active=false;
+//Is the player alive?
 
 //Todo: Implement magazines
 //int ammo=30;
@@ -77,6 +79,17 @@ void FullAmmo()
   {
     ammo[i]=mag_capacity;
   }
+}
+
+//Starts new game
+void StartNewGame()
+{
+  //Set the game to active
+  game_active=true;
+  //Give full ammo to the player
+  FullAmmo();
+  //Full HP
+  hp=100;
 }
 
 int firerate=600; //Fire rate, rounds per minute
@@ -159,6 +172,47 @@ void GUN_Trigger()
 
 }
 
+//Hit points value (0-100) to binary damage value (4 bits)
+int SYS_HP2Damage(int damage)
+{
+  switch(damage)
+  {
+    case 0 ... 1:
+      return 0;
+    case 2 ... 3:
+      return 1;
+    case 4:
+      return 2; 
+    case 5 ... 6:
+      return 3;
+    case 7 ... 9:
+      return 4;
+    case 10 ... 14:
+      return 5;
+    case 15 ... 16:
+      return 6;
+    case 17 ... 19:
+      return 7;
+    case 20 ... 24:
+      return 8;
+    case 25 ... 29:
+      return 9;
+    case 30 ... 34:
+      return 10;
+    case 35 ... 39:
+      return 11;
+    case 40 ... 49:
+      return 12;
+    case 50 ... 74:
+      return 13;
+    case 75 ... 99:
+      return 14;
+    case 100:
+      return 15;
+  }
+}
+//Binary damage value (4 bits) to hit points (0-100)
+//Takes lowest amount
 int SYS_Damage2HP(int damage)
 {
   switch(damage)
@@ -201,7 +255,7 @@ int SYS_Damage2HP(int damage)
 //If the player is dead
 void SYS_Dead()
 {
-
+  hp=0; //Dead!
   //10 second vibration
   digitalWrite(GUN_VibroLEDPin,HIGH);
   Wait(10000);
@@ -224,27 +278,49 @@ void loop() {
   digitalWrite(13,game_active);
 
 
-  //Run the game
+  //Run the game.
+  //If the game is active
   if(game_active)
   {
     //Check firemode (HIGH if full auto)
     GUN_FireMode=digitalRead(GUN_FireModePin);
-    //Trigger operation
-    GUN_Trigger();
-      //Reloading the gun
-    if(digitalRead(GUN_Reload)==HIGH)
-    {
-      //Serial.print(ammo);
-      //Resort the magazines by using bubble sort
-      BubbleSort(ammo,mag_count);
 
+    //Gun fires and reloads only if the player is alive.
+    //If player is alive
+    if(hp>0)
+    {
+      //Trigger operation
+      GUN_Trigger();
+      //Reloading the gun
+      if(digitalRead(GUN_Reload)==HIGH)
+      {
+        //Serial.print(ammo);
+        //Resort the magazines by using bubble sort
+        BubbleSort(ammo,mag_count);
+
+      }
     }
     //Hit indication
     if(hit)
     {
-      digitalWrite(GUN_VibroLEDPin,HIGH);
-      Wait(1000);
-      digitalWrite(GUN_VibroLEDPin,LOW);
+      //If player is alive
+      if(hp>0)
+      {
+        //1 second vibration/indication
+        digitalWrite(GUN_VibroLEDPin,HIGH);
+        Wait(1000);
+        digitalWrite(GUN_VibroLEDPin,LOW);
+      }
+      //If dead
+      else
+      {
+        hp=0; //Dead!
+        //10 second vibration
+        digitalWrite(GUN_VibroLEDPin,HIGH);
+        Wait(10000);
+        digitalWrite(GUN_VibroLEDPin,LOW);        
+      }
+      //Return hit
       hit=!hit;
     }
 
@@ -349,12 +425,9 @@ void loop() {
           //0x8302E8
           if(incoming_value==0x02)
           {
-
-            //Temp code: Start the game
-            //Set the game to active
-            game_active=true;
-            //Give full ammo to the player
-            FullAmmo();
+            //TODO: What delay???
+            StartNewGame();
+            //////////////
             Serial.println("Start game (delayed)");
           }
           //Restore default settings
@@ -368,18 +441,16 @@ void loop() {
           //0x8304E8
           if(incoming_value==0x04)
           {
-
+            //Start with full hit points without shutting the game down
+            hp=100;
             Serial.println("Respawn");
           }
           //Start game (immediately)
           //0x8305E8
           if(incoming_value==0x05)
           {
-            //Temp code: Start the game
-            //Set the game to active
-            game_active=true;
-            //Give full ammo to the player
-            FullAmmo();
+            //Immediately
+            StartNewGame();
             ///////////////////
             Serial.println("Start game (immediately)");
           }
@@ -446,7 +517,8 @@ void loop() {
           //0x830FE8
           if(incoming_value==0x0F)
           {
-
+            //TODO: Armour
+            /////////////
             Serial.println("Full armour");
           }
           //0x8310E8 - Reserved
@@ -523,13 +595,17 @@ void loop() {
 
       //Todo: Vibration motor
 
-      hit=true;
-
-
-
-      //digitalWrite(GUN_VibroLEDPin,LOW);
-      //TODO: 10 second vibration if dead
-      //Todo: HP and respawn
+      //If game is active
+      if(game_active)
+      {
+        //Indicate hit
+        hit=true;
+        //Subtract hit points
+        hp-=SYS_Damage2HP(incoming_damage);
+        //TODO: Armour implementation
+        if(hp<0) hp=0;
+        Serial.print("Remaining HP: ");Serial.println(hp);
+      }
     
       sensor.resume();
     }
