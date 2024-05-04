@@ -2,71 +2,107 @@
 #include "BubbleSort.h"
 #include <IRremote.hpp>
 
+unsigned long SYS_last_time2=0;
+
 //////////
 // Laser tag gun prototype
 
-//TODO: Pinout
+//////////////////////////////////////////////////
+// POWER                                        //
+// Use airsoft grade Li-Ion or LiPo battery.    //
+// Connect positive to VIN, negative to ground. //
+//////////////////////////////////////////////////
 /*
 Pinout:
-0-RXD
-1-TXD
-2-Muzzle flash
-3-IR emitter
-4-Trigger
-5-Reload
-6-Selective fire
-7-Vibration/LED (to sensors)
-8-Sensor signal
+0 - RXD
+1 - TXD
+2 - Muzzle flash
+3 - IR emitter
+4 - Trigger
+5 - Reload
+6 - Selective fire
+7 - Vibration/LED (to sensors)
+8 - Sensor signal
 9-
 10-
 11-
 12-
 13-
 */
+//Connect to the emitter
 int GUN_FlashPin=2; //Muzzle flash pin
 IRsend emitter(3); //Emitter for the gun
+//Gun function
 int GUN_TriggerPin=4; //Trigger
-int GUN_Reload=5; //Reload pin
+int GUN_ReloadPin=5; //Reload pin
 int GUN_FireModePin=6;//Selective fire mode, 0 - semi, 1 - auto
-int GUN_VibroLEDPin=7;
+
+//Connect to the sensor
+int GUN_VibroLEDPin=7;//Hit indication signal
 
 IRrecv sensor(8); //Gun sensor signal
 decode_results results;
 
 
 
+////////////////////
+// Gun parameters //
+////////////////////
 
-//Player, team
-int playerid=95; //Player ID 0-127
-int team=2; //Team ID 0-3
-//Gun damage
-int damage=10; //Gun damage 0-15
+//Player ID 0-127
+int playerid=95;
+
+//Team ID 0-3
+int team=2; 
+
+//Gun damage 0-15
+int damage=10; 
 //TODO: Implement player ID, team ID and damage configuration
 
-int GUN_FireMode;//0 - semi, 1 - auto
+//Gun fire mode.
+//0 - semi, 1 - auto
+int GUN_FireMode;
 
-int hp=100;//Health
-//Todo: Implement damage
-bool hit=false;
+//Health.
+//If 0 hp - you're dead.
+int hp=100;
 
-//Is the game active?
+//Is the player hit?
+//If yes, it fires the hit indication.
+bool hit=false; 
+
+// Is the game active?
+// Gun will fire only if the game is active,
+// and the player has more than zero HP.
 bool game_active=false;
+
+
 //Is the player alive?
 
-//Todo: Implement magazines
 //int ammo=30;
+////////////////////////
+// Magazine system    //
+////////////////////////
 
-int mag_count=3; //Total amount of magazines
-int mag_capacity=30; //Capacity of each magazine
-int ammo[10];//Max magazines - 10 (currently for testing)
+//Total amount of magazines
+int mag_count=3;
+//Capacity of each magazine
+int mag_capacity=30; 
+
+//Bulk ammo array.
+//Index 0 is for the locked and loaded magazine.
+//Max magazines - 10 (currently for testing)
+int ammo[10];
 //Note: C++ array index must be constant, mag_count shouldn't be less than array size!!!
 
-//Total amount of ammo in all magazines
+//Total amount of ammo in all magazines.
 int ammo_total()
 {
   int a;
+  //Take each magazine
   for(int i=0;i<mag_count;i++)
   {
+    //Add the magazine's amount of rounds
     a+=ammo[i];
   }
   return a;
@@ -97,13 +133,16 @@ int firerate=600; //Fire rate, rounds per minute
 
 void setup() {
   // put your setup code here, to run once:
-  //Test
+  
+  /////////////////////////////////////
+  //pinModes
   pinMode(GUN_FlashPin,OUTPUT);//Muzzle flash
   pinMode(GUN_TriggerPin,INPUT);//Trigger
-  pinMode(GUN_Reload,INPUT);//Reload
+  pinMode(GUN_ReloadPin,INPUT);//Reload
   pinMode(GUN_FireModePin,INPUT);//Select fire
   pinMode(GUN_VibroLEDPin,OUTPUT);
   sensor.enableIRIn();
+  ///////////////////////////////////
 
 
   //Debug
@@ -124,17 +163,29 @@ void GUN_Fire()
       //Gunfire code
       //0ppppppp-ttdddd
       //Todo:Implement MilesTag 2 protocol as a Sony variation
-      digitalWriteFast(GUN_FlashPin,HIGH);
+      digitalWriteFast(GUN_FlashPin,HIGH);//Fire a muzzle flash on
+
+      //Construct IR data packet
+      //7 bits player ID 0-127 (first bit always 0!!!)
+      //2 bits team ID 0-3
+      //4 bits damage 0-15
       unsigned long packet = (((playerid << 2) | team) << 4) | damage;
-      emitter.sendSony(packet, 14);//Send as Sony SIRC (MilesTag 2 is Sony SIRC variant with MSB first)
+
+      //Send as Sony SIRC (MilesTag 2 is Sony SIRC variant with MSB first)
+      emitter.sendSony(packet, 14);
+
+      //Muzzle flash off
       digitalWriteFast(GUN_FlashPin,LOW);
-      Wait((int)((1.0/((float)firerate/60.0))*1000.0));//Gun fire rate
-      ammo[0]-=1;//Round away
+      //Gun fire rate delay
+      Wait((int)((1.0/((float)firerate/60.0))*1000.0));//Gun fire rate delay
+      //Round away
+      ammo[0]-=1;
 
       int i=ammo[0];
       Serial.print(i);Serial.print("/");Serial.println(ammo_total());
 }
 
+//Gun trigger operation
 void GUN_Trigger()
 {
   bool hasfired=false;
@@ -165,6 +216,11 @@ void GUN_Trigger()
           hasfired=true;
         }
       }
+      //Test: Semi (doesn't work!)
+      /*
+      if(sensor.decode_old(&results))
+        break;
+      */
 
     }
 
@@ -252,7 +308,7 @@ int SYS_Damage2HP(int damage)
   }
 }
 
-//If the player is dead
+//Kill the player and fire death indication
 void SYS_Dead()
 {
   hp=0; //Dead!
@@ -263,8 +319,10 @@ void SYS_Dead()
 
 }
 
+//Respawn the player without restarting game
 void SYS_Respawn()
 {
+  //TODO: Respawning sfx
   hp=100;
 }
 
@@ -285,20 +343,70 @@ void loop() {
     //Check firemode (HIGH if full auto)
     GUN_FireMode=digitalRead(GUN_FireModePin);
 
-    //Gun fires and reloads only if the player is alive.
+    //Gun fires and reloads only if the player is alive!
     //If player is alive
     if(hp>0)
     {
-      //Trigger operation
-      GUN_Trigger();
-      //Reloading the gun
-      if(digitalRead(GUN_Reload)==HIGH)
+      //Is the gun able to shoot?
+      bool canshoot;
+      //Is the gun being reloaded?
+      bool reloading=false;
+      //Is the mag empty? OR Is the gun being reloaded?
+      if((ammo[0]==0)||(reloading))
+        canshoot=false;
+      else
+        canshoot=true;
+      
+      //Can you fire?
+      if(canshoot&&!reloading)
       {
-        //Serial.print(ammo);
-        //Resort the magazines by using bubble sort
-        BubbleSort(ammo,mag_count);
-
+        //Trigger operation
+        GUN_Trigger();
       }
+
+
+      //Reloading the gun
+      if(digitalRead(GUN_ReloadPin)==HIGH)
+      {
+        reloading=true;
+        //Is the reload successful?
+        bool reloadsuccess;
+        //Modified wait() code
+        //Wait for 5 seconds
+        unsigned long start_time = millis();
+        Serial.println("Reloading...");
+        while (millis() - start_time < 5000)
+        {
+            //If sensor input (getting hit)
+            if(sensor.decode_old(&results))
+            {
+              //Reload unsuccessful!
+              reloadsuccess=false;
+              //Break out of the loop
+              break;
+              //Do not reload
+            }
+            else
+            {
+              //Successful reload
+              reloadsuccess=true;
+            }
+        }
+        SYS_last_time = millis();
+        //If reload is successful
+        if(reloadsuccess)
+        {
+          BubbleSort(ammo,mag_count);
+          reloading=false;
+          Serial.println("Reloaded!");
+        }
+
+
+        
+      }
+
+
+
     }
     //Hit indication
     if(hit)
@@ -314,11 +422,8 @@ void loop() {
       //If dead
       else
       {
-        hp=0; //Dead!
-        //10 second vibration
-        digitalWrite(GUN_VibroLEDPin,HIGH);
-        Wait(10000);
-        digitalWrite(GUN_VibroLEDPin,LOW);        
+        //Player is dead.
+        SYS_Dead();   
       }
       //Return hit
       hit=!hit;
@@ -332,47 +437,73 @@ void loop() {
   //this works!!!
   if(sensor.decode_old(&results))
   {
+    //Received IR data packet
     unsigned long packet=results.value;
-    ////////////////////////////
-    //Service message is 24 bits
-    //1mmmmmmm-nnnnnnnn-0xE8
-    ////////////////////////////
 
+    ////////////////////////////////
+    // Service message is 24 bits //
+    // 1mmmmmmm-nnnnnnnn-0xE8     //
+    ////////////////////////////////
+
+    //If the MSB is 1, and the packet is 24 bits (Message packet)
     if((packet>=0x800000)&&(packet<=0xFFFFFF))
     {
       //Decode a service message
       //Check if it ends with 0xE8
+
+      //3rd byte mask.
       unsigned long E8_mask=0b000000000000000011111111;
+      //Debug
       Serial.println(packet,HEX);
+
+      //If the last byte is E8
       if((packet&E8_mask)==0xE8)
       {
-        //Incoming message ID. Should be equal or greater than 0x80 since the first (most significant) bit is 1.
+
+        //////////////////////////////
+        // Decode a service message //
+        //////////////////////////////
+
+        //Incoming message ID.
+        //Should be equal or greater than 0x80,
+        //since the first (most significant) bit in message packets is always 1.
         unsigned long incoming_message=(packet&0b111111110000000000000000)>>16;
         //Incoming message value.
         unsigned long incoming_value=(packet&0b1111111100000000)>>8;
 
 
-        //Decode a service message
+        //Debug
         Serial.println(results.value, BIN);
         Serial.print("Message: ");Serial.println(incoming_message,HEX);
         Serial.print("Value: ");Serial.println(incoming_value,HEX);
 
-        //Process messages
+        //////////////////////
+        // Process messages //
+        //////////////////////
 
         //0x80 - Add health 0-100
         //0x80xxE8, where xx=0x01 to 0x64 (0-100)
         if(incoming_message==0x80)
         {
 
+          //Add hit points
           hp+=incoming_value;
 
+          //Max HP=100
+          if(hp>=100)
+            hp=100;
+          //TODO: Larger HP values???
+
+          //Debug
           Serial.print("Add health ");Serial.println(incoming_value);
 
         }
+
         //0x81 - Add ammo
         //0x81xxE8, where xx=0x01 to 0x64 (0-100)
         if(incoming_message==0x81)
         {
+          //Take the amount of ammo to be added
           int ammo2=incoming_value;
           //Take each magazine
           for(int i=0;i<mag_count;i++)
@@ -401,7 +532,9 @@ void loop() {
 
           Serial.print("Add ammo ");Serial.println(incoming_value);
         }
+
         //0x82 - Reserved
+
         //0x83 - Command
         //Commands
         if(incoming_message==0x83)
@@ -410,10 +543,10 @@ void loop() {
           //0x8300E8
           if(incoming_value==0x00)
           {
-            //temp code
-            hp=0; //Kill the player
+            SYS_Dead(); //Kill the player
             Serial.println("Admin kill");
           }
+
           //Pause/Unpause
           //0x8301E8
           if(incoming_value==0x01)
@@ -421,6 +554,7 @@ void loop() {
 
             Serial.println("Pause/Unpause");
           }
+
           //Start game (delayed)
           //0x8302E8
           if(incoming_value==0x02)
@@ -430,6 +564,7 @@ void loop() {
             //////////////
             Serial.println("Start game (delayed)");
           }
+
           //Restore default settings
           //0x8303E8
           if(incoming_value==0x03)
@@ -437,6 +572,7 @@ void loop() {
 
             Serial.println("Factory reset (restore default settings)");
           }
+
           //Respawn
           //0x8304E8
           if(incoming_value==0x04)
@@ -445,6 +581,7 @@ void loop() {
             hp=100;
             Serial.println("Respawn");
           }
+
           //Start game (immediately)
           //0x8305E8
           if(incoming_value==0x05)
@@ -454,6 +591,7 @@ void loop() {
             ///////////////////
             Serial.println("Start game (immediately)");
           }
+
           //Full ammo
           //0x8306E8
           if(incoming_value==0x06)
@@ -462,6 +600,7 @@ void loop() {
             FullAmmo();
             Serial.println("Full ammo");
           }
+
           //End game (game over)
           //0x8307E8
           if(incoming_value==0x07)
@@ -470,6 +609,7 @@ void loop() {
             game_active=false;
             Serial.println("Game over");
           }
+
           //Reset clock
           //0x8308E8
           if(incoming_value==0x08)
@@ -477,6 +617,7 @@ void loop() {
 
             Serial.println("Reset clock");
           }
+
           //0x8309E8 - Reserved
 
           //Initialize player
@@ -486,16 +627,18 @@ void loop() {
 
             Serial.println("Initialize player");
           }
-          //Explosion
+
+          //Explosion kill
           //0x830BE8
           if(incoming_value==0x0B)
           {
             //temp code
-            hp=0;//Kill the player
+            SYS_Dead();//Kill the player
             //Todo: Explosion sound
 
             Serial.println("Explosion");
           }
+
           //Initialize new game
           //0x830CE8
           if(incoming_value==0x0C)
@@ -503,6 +646,7 @@ void loop() {
 
             Serial.println("Initialize new game");
           }
+
           //Full HP
           //0x830DE8
           if(incoming_value==0x0D)
@@ -512,7 +656,9 @@ void loop() {
 
             Serial.println("Full health");
           }
+
           //0x830EE8 - Reserved
+
           //Full armour
           //0x830FE8
           if(incoming_value==0x0F)
@@ -521,10 +667,15 @@ void loop() {
             /////////////
             Serial.println("Full armour");
           }
+
           //0x8310E8 - Reserved
+
           //0x8311E8 - Reserved
+
           //0x8312E8 - Reserved
+
           //0x8313E8 - Reserved
+
           //Reset score
           //0x8314E8
           if(incoming_value==0x14)
@@ -532,6 +683,7 @@ void loop() {
 
             Serial.println("Reset score");
           }
+
           //Sensor test
           //0x8315E8
           if(incoming_value==0x15)
@@ -548,6 +700,7 @@ void loop() {
 
 
           }
+          
           //Stun player
           //0x8316E8
           if(incoming_value==0x16)
@@ -555,7 +708,9 @@ void loop() {
 
             Serial.println("Stun player");
           }
+
           //Disarm player (set ammo to 0)
+          //0x8317E8
           if(incoming_value==0x17)
           {
 
@@ -566,6 +721,8 @@ void loop() {
 
             Serial.println("Disarm player");
           }
+
+          //TODO: Add additional MilesTag 2-compatible protocol commands if any exist
         }
 
       }
@@ -576,29 +733,40 @@ void loop() {
       }
       sensor.resume();
     }
-    ////////////////////////////
-    //Gunfire packet is 14 bits
-    //0ppppppp-ttdddd
-    ////////////////////////////
+
+    ///////////////////////////////
+    // Gunfire packet is 14 bits //
+    // 0ppppppp-ttdddd           //
+    ///////////////////////////////
+
+    //If the MSB is 0 and the packet size is 14 bits
     else if((packet>=0b01000000000000)&&(packet<=0b01111111111111))
     {
-      //Decode a gunfire packet
+
+      /////////////////////////////
+      // Decode a gunfire packet //
+      /////////////////////////////
+
+      //Player ID 7 bits, 0-127
       int incoming_player=(packet&0b11111111000000)>>6;
+      //Team ID 2 bits, 0-3
       int incoming_team=(packet&0b0000000110000)>>4;
+      //Damage 4 bits, 0-15
       int incoming_damage=packet&0b0000000001111;
 
+      //Debug
       Serial.println(results.value, BIN);
 
       Serial.print("Player #");Serial.println(incoming_player);
       Serial.print("Team #");Serial.println(incoming_team);
       Serial.print(incoming_damage);Serial.println(" damage");
 
-      //Todo: Vibration motor
 
-      //If game is active
+      //Hit indication
+      //Only if game is active
       if(game_active)
       {
-        //Indicate hit
+        //Indicate hit (fire an LED and a vibration motor)
         hit=true;
         //Subtract hit points
         hp-=SYS_Damage2HP(incoming_damage);
