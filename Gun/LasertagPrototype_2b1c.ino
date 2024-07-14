@@ -171,8 +171,13 @@ void GUN_Fire()
       //4 bits damage 0-15
       unsigned long packet = (((playerid << 2) | team) << 4) | damage;
 
+      
+
       //Send as Sony SIRC (MilesTag 2 is Sony SIRC variant with MSB first)
-      emitter.sendSony(packet, 14);
+      emitter.sendSonyMSB(packet, 14);
+
+      //Debug (bit amount)
+      //Serial.print(checkBitSize(packet));Serial.print(" bits");Serial.println();
 
       //Muzzle flash off
       digitalWriteFast(GUN_FlashPin,LOW);
@@ -375,6 +380,7 @@ void loop() {
         //Wait for 5 seconds
         unsigned long start_time = millis();
         Serial.println("Reloading...");
+        //TODO: Reload start SFX
         while (millis() - start_time < 5000)
         {
             //If sensor input (getting hit)
@@ -396,6 +402,7 @@ void loop() {
         //If reload is successful
         if(reloadsuccess)
         {
+          //Todo: Reload success SFX
           BubbleSort(ammo,mag_count);
           reloading=false;
           Serial.println("Reloaded!");
@@ -740,7 +747,7 @@ void loop() {
     ///////////////////////////////
 
     //If the MSB is 0 and the packet size is 14 bits
-    else if((packet>=0b01000000000000)&&(packet<=0b01111111111111))
+    else if(packet<=0b01111111111111)
     {
 
       /////////////////////////////
