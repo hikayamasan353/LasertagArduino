@@ -1,7 +1,8 @@
+#include <IRremote.h>
+
 /////////////////////////////
 // KOZAC Grenade/Flashbang //
 /////////////////////////////
-#include "IRremote.hpp"
 
 
 ////////////////////////////////////////////////////
@@ -32,7 +33,7 @@ void GREN_Detonate()
 {
   //MilesTag 2 explode player
   // [Header]-0x83-0x0B-0xE8
-  unsigned long packet=((0x83<<8)&0x0b)<<8&0xE8;
+  unsigned long packet=0x830BE8;
   GREN_Emitter.sendSony(packet,24); //sony SIRC have same timings as MT2
   //TODO: BANG!!!! BOOOM!!! BAMMMM!!!!
   
@@ -42,24 +43,24 @@ void GREN_Detonate()
 void GREN_Reset()
 {
   detonated = false;
-  while (digitalRead(GREN_Safety) == HIGH) {
-    // Wait for safety pin to be pulled
-    delay(100);
-  }
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
-  if(GREN_Safety==LOW&&!detonated)
+  
+  
+  if((digitalRead(GREN_Safety)==LOW)&&!detonated)
   {
     delay(5000); //5 seconds
     GREN_Detonate();
     detonated=true;
   }
   //To reprime the grenade by putting the safety pin back
-  else if(detonated&&GREN_Safety==HIGH)
+  else if(detonated&&(digitalRead(GREN_Safety)==HIGH))
+  {
       GREN_Reset();
+    	
+  }
   
 
 }
