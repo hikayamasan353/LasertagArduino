@@ -190,14 +190,20 @@ void GUN_Fire()
       Serial.print(i);Serial.print("/");Serial.println(ammo_total());
 }
 
+//Has the gun fired? (For semi auto)
+bool hasfired=false; //SOLVED: Cheating shouldn't be the issue
+
 //Gun trigger operation
 void GUN_Trigger()
 {
-  bool hasfired=false;
-  if(GUN_FireMode==1)//If full auto
+  
+  //If full auto
+  if(GUN_FireMode==1)
   {
+    //If the trigger is pressed
     if(digitalRead(GUN_TriggerPin)==HIGH)
     {
+      //Fire the gun continuously while there is ammo
       if(ammo[0]>0)
       {
         GUN_Fire();
@@ -205,28 +211,36 @@ void GUN_Trigger()
     }
 
   }
-  else //If semi
+
+  //If semi
+  else
   {
-    while(digitalRead(GUN_TriggerPin)==HIGH)
+    //If the trigger is pressed
+    if(digitalRead(GUN_TriggerPin)==HIGH)
     {
+      //If there's ammo
       if(ammo[0]>0)
       {
+        //If the gun hasn't fied yet
         if(!hasfired)
         {
+          //Fire!
           GUN_Fire();
-          hasfired=true;
+          hasfired=true; //The gun has already fired
         }
+        //If the gun is already fired
         else
         {
-          hasfired=true;
+          //Do not fire
+          hasfired=true;//It has already fired!
         }
       }
-      //Test: Semi (doesn't work!)
-      /*
-      if(sensor.decode_old(&results))
-        break;
-      */
 
+    }
+    //On trigger release
+    else
+    {
+      hasfired=false; //Gun can fire again
     }
 
   }
