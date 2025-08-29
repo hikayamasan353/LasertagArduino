@@ -23,6 +23,9 @@ IRsend irsend(IR_PIN);
 //LCD
 LiquidCrystal_I2C lcd(0x27,16,2);
 
+//Optionally you can use a piezo buzzer on pin 6.
+#define BZR_PIN 6
+
 //////////////////////////////////
 // MilesTag 2 protocol commands //
 //////////////////////////////////
@@ -79,16 +82,35 @@ void loop()
   //Up
   if(digitalRead(BTN_UP_PIN)==HIGH)
   {
+    //Clear the LCD
     lcd.clear();
+
+    //Optional buzzer
+    #ifdef BZR_PIN
+    tone(BZR_PIN,440,100);
+    #endif
+
+    //Change the menu item
     command+=1;
     if(command>19) command=0;
+    delay(250);
+
   }
   //Down
   if(digitalRead(BTN_DOWN_PIN)==HIGH)
   {
+    //Clear the LCD
     lcd.clear();
+
+    //Optional buzzer
+    #ifdef BZR_PIN
+    tone(BZR_PIN,440,100);
+    #endif
+
+    //Change the menu items
     command-=1;
     if(command<0) command=19;
+    delay(250);
   }
 
   //Display command name
