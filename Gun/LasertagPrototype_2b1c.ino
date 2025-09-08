@@ -380,6 +380,7 @@ void loop()
     s.trim();
     Serial.println(s);
 
+    //Player data
     if(s=="gundata")
     {
       Serial.print("Player ID: ");
@@ -392,10 +393,26 @@ void loop()
       Serial.println(damage);
     }
 
+    //Game activation
     if(s=="activate")
       game_active=true;
     else if(s=="gameover")
       game_active=false;
+    
+    //Health and ammo
+    if(s=="health")
+    {
+      Serial.print("Health: ");
+      Serial.println(hp);     
+    }
+    else if(s=="ammo")
+    {
+      Serial.print("Total ammo: ");
+      Serial.print(ammo[0]);
+      Serial.print('/');
+      Serial.println(ammo_total());
+    }
+
 
     
 
