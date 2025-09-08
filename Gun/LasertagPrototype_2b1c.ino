@@ -7,6 +7,9 @@
 //For debug
 #define DEBUG
 
+//For configurable settings via serial
+#define DEBUGCLI
+
 unsigned long SYS_last_time2=0;
 
 //////////
@@ -35,15 +38,15 @@ Pinout:
 13-
 */
 //Connect to the emitter
-int GUN_FlashPin=2; //Muzzle flash pin
+#define GUN_FlashPin 2 //Muzzle flash pin
 IRsend emitter(3); //Emitter for the gun
 //Gun function
-int GUN_TriggerPin=4; //Trigger
-int GUN_ReloadPin=5; //Reload pin
-int GUN_FireModePin=6;//Selective fire mode, 0 - semi, 1 - auto
+#define GUN_TriggerPin 4 //Trigger
+#define GUN_ReloadPin 5 //Reload pin
+#define GUN_FireModePin 6 //Selective fire mode, 0 - semi, 1 - auto
 
 //Connect to the sensor
-int GUN_VibroLEDPin=7;//Hit indication signal
+#define GUN_VibroLEDPin 7 //Hit indication signal
 
 IRrecv sensor(8); //Gun sensor signal
 decode_results results;
@@ -139,7 +142,8 @@ void StartNewGame()
 int firerate=600; //Fire rate, rounds per minute
 
 
-void setup() {
+void setup()
+{
   // put your setup code here, to run once:
   
   /////////////////////////////////////
@@ -366,6 +370,37 @@ void loop()
   //Debug: Game activation
   #ifdef DEBUG
   digitalWrite(13,game_active);
+  #endif
+
+  //CLI debug test code
+  #ifdef DEBUGCLI
+  if(Serial.available())
+  {
+    String s=Serial.readString();
+    s.trim();
+    Serial.println(s);
+
+    if(s=="gundata")
+    {
+      Serial.print("Player ID: ");
+      Serial.println(playerid);
+
+      Serial.print("Team: ");
+      Serial.println(team);
+
+      Serial.print("Damage: ");
+      Serial.println(damage);
+    }
+
+    if(s=="activate")
+      game_active=true;
+    else if(s=="gameover")
+      game_active=false;
+
+    
+
+  }
+
   #endif
 
 
@@ -915,4 +950,12 @@ void loop()
       sensor.resume();
     }
   }
+
+
+
+
+
+
+
+
 }
