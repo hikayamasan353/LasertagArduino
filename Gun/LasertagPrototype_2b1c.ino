@@ -2,6 +2,11 @@
 #include "BubbleSort.h"
 #include <IRremote.hpp>
 
+
+
+//For debug
+#define DEBUG
+
 unsigned long SYS_last_time2=0;
 
 //////////
@@ -61,7 +66,7 @@ int damage=10;
 
 //Gun fire mode.
 //0 - semi, 1 - auto
-int GUN_FireMode;
+int GUN_FireMode=0; //Initialized as semi
 
 //Health.
 //If 0 hp - you're dead.
@@ -80,6 +85,9 @@ bool game_active=false;
 //Is the player alive?
 
 //int ammo=30;
+
+
+
 ////////////////////////
 // Magazine system    //
 ////////////////////////
@@ -162,13 +170,13 @@ void GUN_Fire()
       //this works!
       //Gunfire code
       //0ppppppp-ttdddd
-      //Todo:Implement MilesTag 2 protocol as a Sony variation
+      //Todo:Implement MilesTag 2 protocol as a Sony variation in an IRremote extension
       digitalWriteFast(GUN_FlashPin,HIGH);//Fire a muzzle flash on
 
-      //Construct IR data packet
-      //7 bits player ID 0-127 (first bit always 0!!!)
-      //2 bits team ID 0-3
-      //4 bits damage 0-15
+      //Construct IR data packet:
+      //7 bits player ID 0-127 (first bit always 0!!!),
+      //2 bits team ID 0-3,
+      //4 bits damage 0-15.
       unsigned long packet = (((playerid << 2) | team) << 4) | damage;
 
       
@@ -187,7 +195,11 @@ void GUN_Fire()
       ammo[0]-=1;
 
       int i=ammo[0];
+
+      //Debug
+      #ifdef DEBUG
       Serial.print(i);Serial.print("/");Serial.println(ammo_total());
+      #endif
 }
 
 //Has the gun fired? (For semi auto)
@@ -345,14 +357,16 @@ void SYS_Respawn()
   hp=100;
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void loop() 
+{
 
 
-  //digitalWrite(7,GUN_FireMode);
 
-  //Debug
+
+  //Debug: Game activation
+  #ifdef DEBUG
   digitalWrite(13,game_active);
+  #endif
 
 
   //Run the game.
@@ -393,7 +407,12 @@ void loop() {
         //Modified wait() code
         //Wait for 5 seconds
         unsigned long start_time = millis();
+
+        //Debug code
+        #ifdef DEBUG
         Serial.println("Reloading...");
+        #endif
+
         //TODO: Reload start SFX
         while (millis() - start_time < 5000)
         {
@@ -419,7 +438,11 @@ void loop() {
           //Todo: Reload success SFX
           BubbleSort(ammo,mag_count);
           reloading=false;
+
+          //Debug macro
+          #ifdef DEBUG
           Serial.println("Reloaded!");
+          #endif
         }
 
 
@@ -494,9 +517,11 @@ void loop() {
 
 
         //Debug
+        #ifdef DEBUG
         Serial.println(results.value, BIN);
         Serial.print("Message: ");Serial.println(incoming_message,HEX);
         Serial.print("Value: ");Serial.println(incoming_value,HEX);
+        #endif
 
         //////////////////////
         // Process messages //
@@ -516,7 +541,9 @@ void loop() {
           //TODO: Larger HP values???
 
           //Debug
+          #ifdef DEBUG
           Serial.print("Add health ");Serial.println(incoming_value);
+          #endif
 
         }
 
@@ -550,8 +577,12 @@ void loop() {
 
           }
 
-
+          //Debug
+          #ifdef DEBUG
           Serial.print("Add ammo ");Serial.println(incoming_value);
+          #endif
+
+
         }
 
         //0x82 - Reserved
@@ -564,16 +595,24 @@ void loop() {
           //0x8300E8
           if(incoming_value==0x00)
           {
-            SYS_Dead(); //Kill the player
+            //If the game is active
+            if(game_active)
+              SYS_Dead(); //Kill the player
+
+            //Debug
+            #ifdef DEBUG
             Serial.println("Admin kill");
+            #endif
           }
 
           //Pause/Unpause
           //0x8301E8
           if(incoming_value==0x01)
           {
-
+            //Debug
+            #ifdef DEBUG
             Serial.println("Pause/Unpause");
+            #endif
           }
 
           //Start game (delayed)
@@ -583,15 +622,21 @@ void loop() {
             //TODO: What delay???
             StartNewGame();
             //////////////
+
+            //Debug
+            #ifdef DEBUG
             Serial.println("Start game (delayed)");
+            #endif
           }
 
           //Restore default settings
           //0x8303E8
           if(incoming_value==0x03)
           {
-
+            //Debug
+            #ifdef DEBUG
             Serial.println("Factory reset (restore default settings)");
+            #endif
           }
 
           //Respawn
@@ -600,7 +645,11 @@ void loop() {
           {
             //Start with full hit points without shutting the game down
             hp=100;
+
+            //Debug
+            #ifdef DEBUG
             Serial.println("Respawn");
+            #endif
           }
 
           //Start game (immediately)
@@ -610,7 +659,11 @@ void loop() {
             //Immediately
             StartNewGame();
             ///////////////////
+
+            //Debug
+            #ifdef DEBUG
             Serial.println("Start game (immediately)");
+            #endif
           }
 
           //Full ammo
@@ -619,24 +672,37 @@ void loop() {
           {
             //Rearm the player's magazines
             FullAmmo();
+
+            //Debug
+            #ifdef DEBUG
             Serial.println("Full ammo");
+            #endif
           }
 
           //End game (game over)
           //0x8307E8
           if(incoming_value==0x07)
           {
-            //Temp code
+            //End the game session
             game_active=false;
+
+            //Debug
+            #ifdef DEBUG
             Serial.println("Game over");
+            #endif
           }
 
           //Reset clock
           //0x8308E8
           if(incoming_value==0x08)
           {
+            //How to even implement clock? What it even is???
 
+
+            //Debug
+            #ifdef DEBUG
             Serial.println("Reset clock");
+            #endif
           }
 
           //0x8309E8 - Reserved
@@ -645,19 +711,26 @@ void loop() {
           //0x830AE8
           if(incoming_value==0x0A)
           {
-
+            
+            //Debug
+            #ifdef DEBUG
             Serial.println("Initialize player");
+            #endif
           }
 
           //Explosion kill
           //0x830BE8
           if(incoming_value==0x0B)
           {
-            //temp code
-            SYS_Dead();//Kill the player
-            //Todo: Explosion sound
+            //If the game is active
+            if(game_active)
+              SYS_Dead();//Kill the player
+              //Todo: Explosion sound
 
+            //Debug
+            #ifdef DEBUG
             Serial.println("Explosion");
+            #endif
           }
 
           //Initialize new game
@@ -665,17 +738,23 @@ void loop() {
           if(incoming_value==0x0C)
           {
 
+            //Debug
+            #ifdef DEBUG
             Serial.println("Initialize new game");
+            #endif
           }
 
           //Full HP
           //0x830DE8
           if(incoming_value==0x0D)
           {
-            //temp code
+            //Restore the HP value
             hp=100;
 
+            //Debug
+            #ifdef DEBUG
             Serial.println("Full health");
+            #endif
           }
 
           //0x830EE8 - Reserved
@@ -686,7 +765,11 @@ void loop() {
           {
             //TODO: Armour
             /////////////
+
+            //Debug
+            #ifdef DEBUG
             Serial.println("Full armour");
+            #endif
           }
 
           //0x8310E8 - Reserved
@@ -702,7 +785,10 @@ void loop() {
           if(incoming_value==0x14)
           {
 
+            //Debug
+            #ifdef DEBUG
             Serial.println("Reset score");
+            #endif
           }
 
           //Sensor test
@@ -716,7 +802,10 @@ void loop() {
             Wait(1000);
             digitalWrite(GUN_VibroLEDPin,LOW);
 
+            //Debug
+            #ifdef DEBUG
             Serial.println("Sensor test");
+            #endif
 
 
 
@@ -727,7 +816,10 @@ void loop() {
           if(incoming_value==0x16)
           {
 
+            //Debug
+            #ifdef DEBUG
             Serial.println("Stun player");
+            #endif
           }
 
           //Disarm player (set ammo to 0)
@@ -740,7 +832,10 @@ void loop() {
               ammo[i]=0;
             }
 
+            //Debug
+            #ifdef DEBUG
             Serial.println("Disarm player");
+            #endif
           }
 
           //TODO: Add additional MilesTag 2-compatible protocol commands if any exist
@@ -750,7 +845,9 @@ void loop() {
       else
       {
         //Invalid packet!
+        #ifdef DEBUG
         Serial.print("Invalid message packet!!!");
+        #endif
       }
       sensor.resume();
     }
@@ -776,11 +873,13 @@ void loop() {
       int incoming_damage=packet&0b0000000001111;
 
       //Debug
+      #ifdef DEBUG
       Serial.println(results.value, BIN);
 
       Serial.print("Player #");Serial.println(incoming_player);
       Serial.print("Team #");Serial.println(incoming_team);
       Serial.print(incoming_damage);Serial.println(" damage");
+      #endif
 
 
       //Hit indication
@@ -793,7 +892,11 @@ void loop() {
         hp-=SYS_Damage2HP(incoming_damage);
         //TODO: Armour implementation
         if(hp<0) hp=0;
+
+        //Debug code
+        #ifdef DEBUG
         Serial.print("Remaining HP: ");Serial.println(hp);
+        #endif
       }
     
       sensor.resume();
@@ -801,8 +904,14 @@ void loop() {
     else
     {
       //Invalid packet
+
+      //Debug
+      #ifdef DEBUG
       Serial.println(packet,BIN);
-      Serial.println("Invalid packet!!!");      
+      Serial.println("Invalid packet!!!");
+      #endif
+
+      //Ignore the command     
       sensor.resume();
     }
   }
