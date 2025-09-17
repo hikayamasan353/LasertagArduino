@@ -39,7 +39,8 @@ Pinout:
 */
 //Connect to the emitter
 #define GUN_FlashPin 2 //Muzzle flash pin
-IRsend emitter(3); //Emitter for the gun
+//IRsend emitter(3); //Emitter for the gun
+#define GUN_EmitterPin 3 //Emitter for the gun
 //Gun function
 #define GUN_TriggerPin 4 //Trigger
 #define GUN_ReloadPin 5 //Reload pin
@@ -48,7 +49,8 @@ IRsend emitter(3); //Emitter for the gun
 //Connect to the sensor
 #define GUN_VibroLEDPin 7 //Hit indication signal
 
-IRrecv sensor(8); //Gun sensor signal
+//IrReciever sensor(8); //Gun sensor signal
+#define GUN_ReceiverPin 8
 decode_results results;
 
 
@@ -153,7 +155,9 @@ void setup()
   pinMode(GUN_ReloadPin,INPUT);//Reload
   pinMode(GUN_FireModePin,INPUT);//Select fire
   pinMode(GUN_VibroLEDPin,OUTPUT);
-  sensor.enableIRIn();
+  //sensor.enableIRIn();
+  IrSender.begin(GUN_EmitterPin);
+  IrReceiver.begin(GUN_ReceiverPin);
   ///////////////////////////////////
 
 
@@ -186,7 +190,7 @@ void GUN_Fire()
       
 
       //Send as Sony SIRC (MilesTag 2 is Sony SIRC variant with MSB first)
-      emitter.sendSonyMSB(packet, 14);
+      IrSender.sendSonyMSB(packet, 14);
 
       //Debug (bit amount)
       //Serial.print(checkBitSize(packet));Serial.print(" bits");Serial.println();
@@ -452,7 +456,8 @@ void loop()
         while (millis() - start_time < 5000)
         {
             //If sensor input (getting hit)
-            if(sensor.decode_old(&results))
+            //if(sensor.decode_old(&results))
+            if(IrReceiver.decode())
             {
               //Reload unsuccessful!
               reloadsuccess=false;
@@ -514,10 +519,13 @@ void loop()
 
   //Check sensors
   //this works!!!
-  if(sensor.decode_old(&results))
+  if(IrReceiver.decode())
   {
     //Received IR data packet
-    unsigned long packet=results.value;
+    //unsigned long packet=results.value;
+
+    //Recent updates to IRremote library have made LSB first decoding by default. 
+    unsigned long packet=IrReceiver.decodedIRData.decodedRawData;
 
     ////////////////////////////////
     // Service message is 24 bits //
@@ -525,7 +533,7 @@ void loop()
     ////////////////////////////////
 
     //If the MSB is 1, and the packet is 24 bits (Message packet)
-    if((packet>=0x800000)&&(packet<=0xFFFFFF))
+    if(((bitreverse32Bit(packet)>>(32-24))>=0x800000)&&((bitreverse32Bit(packet)>>(32-24))<=0xFFFFFF))
     {
       //Decode a service message
       //Check if it ends with 0xE8
@@ -533,10 +541,13 @@ void loop()
       //3rd byte mask.
       unsigned long E8_mask=0b000000000000000011111111;
       //Debug
-      Serial.println(packet,HEX);
+
+      #ifdef DEBUG
+      Serial.println((bitreverse32Bit(packet)>>(32-24)),HEX);
+      #endif
 
       //If the last byte is E8
-      if((packet&E8_mask)==0xE8)
+      if(((bitreverse32Bit(packet)>>(32-24))&E8_mask)==0xE8)
       {
 
         //////////////////////////////
@@ -546,9 +557,9 @@ void loop()
         //Incoming message ID.
         //Should be equal or greater than 0x80,
         //since the first (most significant) bit in message packets is always 1.
-        unsigned long incoming_message=(packet&0b111111110000000000000000)>>16;
+        unsigned long incoming_message=((bitreverse32Bit(packet)>>(32-24))&0b111111110000000000000000)>>16;
         //Incoming message value.
-        unsigned long incoming_value=(packet&0b1111111100000000)>>8;
+        unsigned long incoming_value=((bitreverse32Bit(packet)>>(32-24))&0b1111111100000000)>>8;
 
 
         //Debug
@@ -884,7 +895,7 @@ void loop()
         Serial.print("Invalid message packet!!!");
         #endif
       }
-      sensor.resume();
+      IrReceiver.resume();
     }
 
     ///////////////////////////////
@@ -893,7 +904,7 @@ void loop()
     ///////////////////////////////
 
     //If the MSB is 0 and the packet size is 14 bits
-    else if(packet<=0b01111111111111)
+    else if((bitreverse32Bit(packet)>>(32-14))<=0b01111111111111)
     {
 
       /////////////////////////////
@@ -901,15 +912,15 @@ void loop()
       /////////////////////////////
 
       //Player ID 7 bits, 0-127
-      int incoming_player=(packet&0b11111111000000)>>6;
+      int incoming_player=((bitreverse32Bit(packet)>>(32-14))&0b11111111000000)>>6;
       //Team ID 2 bits, 0-3
-      int incoming_team=(packet&0b0000000110000)>>4;
+      int incoming_team=((bitreverse32Bit(packet)>>(32-14))&0b0000000110000)>>4;
       //Damage 4 bits, 0-15
       int incoming_damage=packet&0b0000000001111;
 
       //Debug
       #ifdef DEBUG
-      Serial.println(results.value, BIN);
+      Serial.println((bitreverse32Bit(packet)>>(32-14)), BIN);
 
       Serial.print("Player #");Serial.println(incoming_player);
       Serial.print("Team #");Serial.println(incoming_team);
@@ -934,7 +945,7 @@ void loop()
         #endif
       }
     
-      sensor.resume();
+      IrReceiver.resume();
     }
     else
     {
@@ -947,7 +958,7 @@ void loop()
       #endif
 
       //Ignore the command     
-      sensor.resume();
+      IrReceiver.resume();
     }
   }
 
