@@ -401,20 +401,73 @@ void loop()
     else if(s=="gameover")
       game_active=false;
 
+
+    //Setting
+
+    /*
     if(s.indexOf("set playerid ")==0)
     {
       String s1=s.substring(13);
-      int pid=(int)(s1.toInt());
-      if(pid>127)
+      int param=(int)(s1.toInt());
+      if(param>127)
         Serial.println("Invalid player ID! Player ID should be 0-127");
       else
       {
-        playerid=pid;
+        playerid=param;
         Serial.print("Player ID set to ");
         Serial.println(s1);
       };
 
     }
+
+    else if(s.indexOf("set teamid ")==0)
+    {
+      String s1=s.substring(11);
+      int param=(int)(s1.toInt());
+      if(param>3)
+        Serial.println("Invalid team ID! Team ID should be 0-3");
+      else
+       {
+        team=param;
+        Serial.print("Team ID set to ");
+        Serial.println(s1);
+       };
+    }
+    */
+
+    
+    if(s.indexOf("set ")==0)
+    {
+      String s1;
+      int param;
+      if(s.indexOf("playerid ")==4)
+      {
+        s1=s.substring(13);
+        param=(int)(s1.toInt());
+        if(param>127)
+          Serial.println("Invalid player ID! Player ID should be 0-127");
+        else
+        {
+          playerid=param;
+          Serial.print("Player ID set to ");
+          Serial.println(s1);
+        }
+      }
+      else if(s.indexOf("teamid ")==4)
+      {
+        s1=s.substring(11);
+        param=(int)(s1.toInt());
+        if(param>3)
+          Serial.println("Invalid team ID! Team ID should be 0-3");
+        else
+        {
+          team=param;
+          Serial.print("Team ID set to ");
+          Serial.println(s1);
+        }
+      }
+    }
+    
 
     
 
