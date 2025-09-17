@@ -384,7 +384,6 @@ void loop()
     s.trim();
     Serial.println(s);
 
-    //Player data
     if(s=="gundata")
     {
       Serial.print("Player ID: ");
@@ -397,26 +396,25 @@ void loop()
       Serial.println(damage);
     }
 
-    //Game activation
     if(s=="activate")
       game_active=true;
     else if(s=="gameover")
       game_active=false;
-    
-    //Health and ammo
-    if(s=="health")
-    {
-      Serial.print("Health: ");
-      Serial.println(hp);     
-    }
-    else if(s=="ammo")
-    {
-      Serial.print("Total ammo: ");
-      Serial.print(ammo[0]);
-      Serial.print('/');
-      Serial.println(ammo_total());
-    }
 
+    if(s.indexOf("set playerid ")==0)
+    {
+      String s1=s.substring(13);
+      int pid=(int)(s1.toInt());
+      if(pid>127)
+        Serial.println("Invalid player ID! Player ID should be 0-127");
+      else
+      {
+        playerid=pid;
+        Serial.print("Player ID set to ");
+        Serial.println(s1);
+      };
+
+    }
 
     
 
