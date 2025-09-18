@@ -408,7 +408,7 @@ void loop()
       Serial.print("Health: ");
       Serial.println(hp);     
     }
-    else if(s=="ammo")
+    if(s=="ammo")
     {
       Serial.print("Total ammo: ");
       Serial.print(ammo[0]);
