@@ -402,6 +402,21 @@ void loop()
       game_active=false;
 
 
+        //Health and ammo
+    if(s=="health")
+    {
+      Serial.print("Health: ");
+      Serial.println(hp);     
+    }
+    else if(s=="ammo")
+    {
+      Serial.print("Total ammo: ");
+      Serial.print(ammo[0]);
+      Serial.print('/');
+      Serial.println(ammo_total());
+    }
+
+
     //Setting
 
     /*
@@ -466,7 +481,27 @@ void loop()
           Serial.println(s1);
         }
       }
+      else if(s.indexOf("damage ")==4)
+      {
+        s1=s.substring(11);
+        param=(int)(s1.toInt());
+        if(param>15)
+        {
+          Serial.println("Invalid damage value! Damage value should be 0-15");
+          //Serial.println("Hint: Do not write damage value directly in HP");
+        }
+        else
+        {
+          damage=param;
+          Serial.print("Damage set to ");
+          Serial.println(s1);
+        }
+          
+
+      }
     }
+
+
     
 
     
